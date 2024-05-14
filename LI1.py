@@ -23,6 +23,7 @@ P_info = {"PID": ""}
 info_order = ["PID"]
 cue_colours = ([-1,0.10588,-1],[-1,-1,1]) # 2 colours taken from Kirsten EEG
 cue_colour_names = ('green','blue')
+cue_width = 200
 
 # parallel port triggers
 port_address = 0xDFD8
@@ -226,7 +227,7 @@ for i in range(1, num_TENS_preexp + 1):
         "blocknum": 1,
         "stimulus": "TENS",
         "outcome": "none",
-        "trialname": "pre-exposure",
+        "trialname": "preexposure",
         "exp_response": None,
         "pain_response": None
     } 
@@ -317,7 +318,7 @@ save_data(trial_order)
     
 # #Test questions
 rating_stim = { "Pain": visual.Slider(win,
-                                    pos = (0,-200),
+                                    pos = (0,-350),
                                     ticks=[0,100],
                                     labels=("Not painful","Very painful"),
                                     granularity=0.1,
@@ -326,7 +327,7 @@ rating_stim = { "Pain": visual.Slider(win,
                                     autoLog = False,
                                     labelHeight = 30),
                 "Expectancy": visual.Slider(win,
-                                    pos = (0,-200),
+                                    pos = (0,-350),
                                     ticks=[0,100],
                                     labels=("Not painful","Very painful"),
                                     granularity=0.1,
@@ -356,6 +357,7 @@ instructions_text = {
         The TENS device may be activated intermittently, although NO thermal stimuli will be delivered during this phase.",
     "baseline": "Before we begin, we will record some baseline measures. Please stay seated and stay still during this phase, as excessive movement may interfere with our readings. \n\n \
         NO thermal stimuli will be delivered during this phase.",
+    "baseline_waiting": "Collecting baseline readings, please stay still",
     "conditioning_socialmodel": "Baseline measures have been recorded, thank you for your patience. \n\n\
         Please call for the experimenter to prepare for the next stage of the experiment",
     "conditioning_naturalhistory": "Baseline measures have been recorded, thank you for your patience. \n\n\
@@ -385,14 +387,20 @@ response_instructions = {
 pain_text = visual.TextStim(win,
             text=response_instructions["Pain"],
             height = 35,
-            pos = (0,-100),
+            pos = (0,-250),
             )
 
 exp_text = visual.TextStim(win,
             text=response_instructions["Expectancy"],
             height = 35,
-            pos = (0,-100)
+            pos = (0,-250)
             ) 
+baseline_text = visual.TextStim(win,
+            text=instructions_text["baseline_waiting"],
+            height=35,
+            pos = (0,250)
+            )   
+                                
 # pre-draw countdown stimuli (numbers 10-1)
 countdown_text = {}
 for i in range(0,11):
@@ -401,120 +409,173 @@ for i in range(0,11):
                             height = 50,
                             text=str(i))
     
+cue_stims = {"TENS" : visual.Rect(win,
+                        lineColor = stim_colours["TENS"],
+                        fillColor = stim_colours["TENS"],
+                        width = cue_width,
+                        height = cue_width,
+                        pos = (300,0),
+                        autoLog = False),
+             "control" : visual.Rect(win,
+                        lineColor = stim_colours["control"],
+                        fillColor = stim_colours["control"],
+                        width = cue_width,
+                        height = cue_width,
+                        pos = (-300,0),
+                        autoLog = False)
+             }
+    
 # Define button_text dictionaries
 #### Make trial functions
 def show_trial(current_trial):
+   
+    if pport != None:
+        pport.setData(0)
+        
+    win.flip()
+    
     #set ITI for trial
-    iti = random.randint(iti_jitter) / 1000
+    iti = random.randint(*iti_jitter) / 1000
     
-    if pport != None:
-        pport.setData(0)
-        
-    win.flip()
-        
-    # Start countdown to shock
-    
-    # Make a count-down screen
-    countdown_timer = core.CountdownTimer(10)  # Set the initial countdown time to 10 seconds
-  
-    while countdown_timer.getTime() > 8:
-        termination_check()
-        countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
+    # Set the initial countdown time to 10 seconds
+    countdown_timer = core.CountdownTimer(10)  
+
+    #if pre-exposure, only show and activate TENS
+    if current_trial["trialname"] == "preexposure":  
+        if groupname == 'preexposure':
+            while countdown_timer.getTime() > 8:
+                termination_check()
+                baseline_text.draw()
+                win.flip()
+                
+            while countdown_timer.getTime() < 8 and countdown_timer.getTime() > 0: #turn on TENS at 8 seconds
+                termination_check()
+                
+                if pport != None:
+                # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
+                    if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
+                        pport.setData(stim_trig[current_trial["stimulus"]])
+                    if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
+                        pport.setData(0)
+                        TENS_timer = countdown_timer.getTime() 
+                cue_stims[current_trial["stimulus"]].draw()
+                baseline_text.draw()
+                win.flip() 
+                
+        if groupname != 'preexposure':
+            while countdown_timer.getTime() > 0:
+                termination_check()
+                baseline_text.draw()
+                win.flip()
+
         win.flip()
-    
-        TENS_timer = countdown_timer.getTime() + TENS_pulse_int
-    while countdown_timer.getTime() < 8 and countdown_timer.getTime() > 7: #turn on TENS at 8 seconds
-        termination_check()
+        core.wait(iti)   
+        current_trial["iti"] = iti
         
-        if pport != None:
-            # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
-            if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
-                pport.setData(stim_trig[current_trial["stimulus"]])
-            if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
-                pport.setData(0)
-                TENS_timer = countdown_timer.getTime() 
-
-        countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
-        win.flip()
-
-    
-    TENS_timer = countdown_timer.getTime() + TENS_pulse_int
-
-    while countdown_timer.getTime() < 7 and countdown_timer.getTime() > 0: #ask for expectancy at 7 seconds
-        if pport != None:
+    if current_trial["phase"] == "conditioning" and current_trial["groupname"] != "naturalhistory":
+        MOVIE STIM
+        
+    else: 
+        while countdown_timer.getTime() > 8:
             termination_check()
-                      
-            # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
-            if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
-                pport.setData(stim_trig[current_trial["stimulus"]])
-            if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
+            countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
+            win.flip()
+        
+            TENS_timer = countdown_timer.getTime() + TENS_pulse_int
+            
+        while countdown_timer.getTime() < 8 and countdown_timer.getTime() > 7: #turn on TENS at 8 seconds
+            termination_check()
+            
+            if pport != None:
+                # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
+                if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
+                    pport.setData(stim_trig[current_trial["stimulus"]])
+                if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
+                    pport.setData(0)
+                    TENS_timer = countdown_timer.getTime() 
+
+            countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
+            cue_stims[current_trial["stimulus"]].draw()
+            win.flip()
+
+        
+        TENS_timer = countdown_timer.getTime() + TENS_pulse_int
+
+        while countdown_timer.getTime() < 7 and countdown_timer.getTime() > 0: #ask for expectancy at 7 seconds
+            if pport != None:
+                termination_check()
+                        
+                # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
+                if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
+                    pport.setData(stim_trig[current_trial["stimulus"]])
+                if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
+                    pport.setData(0)
+                    TENS_timer = countdown_timer.getTime() 
+
+            countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
+            cue_stims[current_trial["stimulus"]].draw()
+            
+            # Ask for expectancy rating
+            exp_text.draw() 
+            exp_rating.draw()
+            win.flip()    
+
+            current_trial["exp_response"] = exp_rating.getRating() #saves the expectancy response for that trial
+            exp_rating.reset() #resets the expectancy slider for subsequent trials
+                
+            # deliver shock
+            if pport != None:
                 pport.setData(0)
-                TENS_timer = countdown_timer.getTime() 
-
-        countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
-        
-        # Ask for expectancy rating
-        exp_text.draw() 
-        exp_rating.draw()
-        win.flip()    
-
-    current_trial["exp_response"] = exp_rating.getRating() #saves the expectancy response for that trial
-    exp_rating.reset() #resets the expectancy slider for subsequent trials
-        
-    # deliver shock
-    if pport != None:
-        pport.setData(0)
-    fix_stim.draw()
-    win.flip()
-    
-    if pport != None:
-        pport.setData(pain_trig)
-        core.wait(port_buffer_duration)
-        pport.setData(0)
-
-    # Get pain rating
-    while pain_rating.getRating() is None: # while mouse unclicked
-        termination_check()
-        pain_rating.draw()
-        pain_text.draw()
-        win.flip()
+            fix_stim.draw()
+            win.flip()
             
+            if pport != None:
+                pport.setData(pain_trig)
+                core.wait(port_buffer_duration)
+                pport.setData(0)
+
+            # Get pain rating
+            while pain_rating.getRating() is None: # while mouse unclicked
+                termination_check()
+                pain_rating.draw()
+                pain_text.draw()
+                win.flip()
+                    
+                    
+            pain_response_end_time = core.getTime() + response_hold_duration # amount of time for participants to adjust slider after making a response
             
-    pain_response_end_time = core.getTime() + response_hold_duration # amount of time for participants to adjust slider after making a response
-    
-    while core.getTime() < pain_response_end_time:
-        termination_check()
-        pain_text.draw()
-        pain_rating.draw()
-        win.flip()
-        
-    current_trial["pain_response"] = pain_rating.getRating()
-    pain_rating.reset()
+            while core.getTime() < pain_response_end_time:
+                termination_check()
+                pain_text.draw()
+                pain_rating.draw()
+                win.flip()
+                
+            current_trial["pain_response"] = pain_rating.getRating()
+            pain_rating.reset()
 
-    win.flip()
-    
-    core.wait(iti)
-    current_trial["iti"] = iti
+            win.flip()
+            core.wait(iti)
+            current_trial["iti"] = iti
 
-exp_finish = True
+exp_finish = None
 
-# # Run experiment
-# while not exp_finish:
-#     termination_check()
-#     #display welcome instructions
-#     instruction_trial(instructions_text["welcome"],3)
-#     instruction_trial(instructions_text["TENS_introduction"],3)
+# Run experiment
+while not exp_finish:
+    termination_check()
+    #display welcome instructions
+    # instruction_trial(instructions_text["welcome"],3)
+    # instruction_trial(instructions_text["TENS_introduction"],3)
     
-#     # #display main experiment phase
-#     instruction_trial(instructions_text["experiment"],10)
-#     for trial in trial_order:
-#         show_trial(trial)
+    # # #display main experiment phase
+    # instruction_trial(instructions_text["experiment"],10)
+    for trial in trial_order[0:5]:
+        show_trial(trial)
 
-#     pport.setData(0) # Set all pins to 0 to shut off context, TENS, shock etc.    
-#     # save trial data
-#     save_data(trial_order)
-#     exit_screen(instructions_text["end"])
+    pport.setData(0) # Set all pins to 0 to shut off context, TENS, shock etc.    
+    # save trial data
+    save_data(trial_order)
+    exit_screen(instructions_text["end"])
     
-#     exp_finish = True
+    exp_finish = True
     
-# win.close()
+win.close()
