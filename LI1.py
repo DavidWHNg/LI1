@@ -24,6 +24,11 @@ info_order = ["PID"]
 cue_colours = ([-1,0.10588,-1],[-1,-1,1]) # 2 colours taken from Kirsten EEG
 cue_colour_names = ('green','blue')
 cue_width = 200
+video_painratings_mean = {"TENS" : 81, "control": 31}
+video_painratings_spread = {"TENS" : 9, "control" : 15}
+video_painratings_buffer = 4
+video_stim_time = 60
+video_stim_iti = 6
 
 # parallel port triggers
 port_address = 0xDFD8
@@ -42,7 +47,7 @@ while True:
             print("Participant ID cannot be empty.")
             continue
             
-        csv_filename = P_info["PID"] + "_responses.csv"
+        data_filename = P_info["PID"] + "_responses.csv"
         script_directory = os.path.dirname(os.path.abspath(__file__))  #Set the working directory to the folder the Python code is opened from
         
         #set a path to a "data" folder to save data in
@@ -51,11 +56,11 @@ while True:
         # if data folder doesn"t exist, create one
         if not os.path.exists(data_folder):
             os.makedirs(data_folder)
-        
+            
         #set file name within "data" folder
-        csv_filepath = os.path.join(data_folder,csv_filename)
+        data_filepath = os.path.join(data_folder,data_filename)
         
-        if os.path.exists(csv_filepath):
+        if os.path.exists(data_filepath):
             print(f"Data for participant {P_info['PID']} already exists. Choose a different participant ID.") ### to avoid re-writing existing data
         
         
@@ -162,7 +167,7 @@ def instruction_trial(instructions,holdtime):
     event.waitKeys(keyList=["space"])
     win.flip()
     
-    core.wait(iti)
+    core.wait(2)
     
 # Create functions
     # Save responses to a CSV file
@@ -182,7 +187,7 @@ def save_data(data):
     colnames = list(trial_order[0].keys())
 
     # Open the CSV file for writing
-    with open(csv_filepath, mode="w", newline="") as csv_file:
+    with open(data_filepath, mode="w", newline="") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=colnames)
         
         # Write the header row
@@ -229,7 +234,8 @@ for i in range(1, num_TENS_preexp + 1):
         "outcome": "none",
         "trialname": "preexposure",
         "exp_response": None,
-        "pain_response": None
+        "pain_response": None,
+        "iti" : None
     } 
     trial_order.append(trial)
 
@@ -279,6 +285,7 @@ if groupname != "naturalhistory":
                 "trialname": str(stimulus) + "_" + str(outcome),
                 "exp_response": None,
                 "pain_response": None,
+                "iti" : None
             }
             trial_order.append(trial)
             
@@ -293,6 +300,7 @@ elif groupname == "naturalhistory":
                 "trialname": str(stimulus) + "_" + str(outcome),
                 "exp_response": None,
                 "pain_response": None,
+                "iti": None
             }
             trial_order.append(trial)
                     
@@ -306,7 +314,8 @@ for block in range(num_blocks_conditioning+1,num_blocks_conditioning+num_blocks_
             "outcome": outcome,
             "trialname": str(stimulus) + "_" + str(outcome),
             "exp_response": None,
-            "pain_response": None
+            "pain_response": None,
+            "iti": None
         }
         trial_order.append(trial)
         
@@ -377,11 +386,7 @@ Please ask the experimenter if you have any questions now before proceeding.",
 
 response_instructions = {
     "Pain": "How painful was the thermal stimulus?",
-    "Expectancy": "How painful do you expect the next thermal stimulus to be?" #,
-#     "Shock": "Press spacebar to activate the shock",
-#     "Check": "Please indicate whether you would like to try the next level of shock, stay at this level, or go back to the previous level for the experiment.",
-#     "Check_max": "Note that this is the maximum level of shock.\n\n\
-#  Would you like to stay at this level or go down a level?"
+    "Expectancy": "How painful do you expect the next thermal stimulus to be?" 
                          }
 
 pain_text = visual.TextStim(win,
@@ -424,7 +429,13 @@ cue_stims = {"TENS" : visual.Rect(win,
                         pos = (-300,0),
                         autoLog = False)
              }
-    
+video_stim = visual.MovieStim(win,
+                              filename=os.path.join(script_directory, "SMconditioning.mp4"),
+                              size = (400,300),
+                              pos = (0,250),
+                              volume = 1.0,
+                              autoStart=True)
+
 # Define button_text dictionaries
 #### Make trial functions
 def show_trial(current_trial):
@@ -435,7 +446,10 @@ def show_trial(current_trial):
     win.flip()
     
     #set ITI for trial
-    iti = random.randint(*iti_jitter) / 1000
+    if current_trial["phase"] == "conditioning" and current_trial["groupname"] != "naturalhistory":
+        iti = video_stim_iti
+    else:
+        iti = random.randint(*iti_jitter) / 1000
     
     # Set the initial countdown time to 10 seconds
     countdown_timer = core.CountdownTimer(10)  
@@ -462,6 +476,8 @@ def show_trial(current_trial):
                 baseline_text.draw()
                 win.flip() 
                 
+            pport.setData(0)
+                
         if groupname != 'preexposure':
             while countdown_timer.getTime() > 0:
                 termination_check()
@@ -472,9 +488,73 @@ def show_trial(current_trial):
         core.wait(iti)   
         current_trial["iti"] = iti
         
+    # if current_trial["phase"] == "conditioning" and current_trial["groupname"] != "naturalhistory":
     if current_trial["phase"] == "conditioning" and current_trial["groupname"] != "naturalhistory":
-        MOVIE STIM
+        while countdown_timer.getTime() > 8:
+            termination_check()
+            countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
+            video_stim.draw()
+            win.flip()
+            
+        while countdown_timer.getTime() < 8 and countdown_timer.getTime() > 7: #turn on TENS at 8 seconds
+            termination_check()
+            countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
+            cue_stims[current_trial["stimulus"]].draw()
+            video_stim.draw()
+            win.flip()
+
+        while countdown_timer.getTime() < 7 and countdown_timer.getTime() > 0: #ask for expectancy at 7 seconds
+            termination_check()
+            countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
+            video_stim.draw()
+            cue_stims[current_trial["stimulus"]].draw()
+            
+            # Ask for expectancy rating
+            exp_text.draw() 
+            exp_rating.draw()
+            video_stim.draw()
+            win.flip()    
+
+        current_trial["exp_response"] = exp_rating.getRating() #saves the expectancy response for that trial
+        exp_rating.reset() #resets the expectancy slider for subsequent trials
         
+        buffer_timer = core.CountdownTimer(video_painratings_buffer)   
+                       
+        while buffer_timer.getTime() > 0:
+            video_stim.draw()
+            win.flip() 
+
+        # present social model's pain rating 
+        pain_rating_sm = random.normalvariate(
+                video_painratings_mean[current_trial["stimulus"]],
+                video_painratings_spread[current_trial["stimulus"]])
+        
+        pain_text_sm = visual.TextStim(win, 
+                            color="white", 
+                            height = 30,
+                            pos = (0,-250),
+                            text= "The demonstrater gave this pain rating on this trial:")
+        
+        pain_rating.rating = pain_rating_sm
+        pain_rating.readOnly = True
+        
+        iti_timer = core.CountdownTimer(video_stim_iti)
+        while iti_timer.getTime() > 0:
+            video_stim.draw()
+            pain_text_sm.draw()
+            pain_rating.draw()
+            win.flip()
+
+                
+        current_trial["pain_response"] = pain_rating.getRating()
+        pain_rating.reset()
+
+        win.flip()
+        
+        current_trial["iti"] = iti
+            
+    #if it's a conditioning/extinction trial, do regular 10 second countdown with stimuli + pain stimulus etc.  
+      
     else: 
         while countdown_timer.getTime() > 8:
             termination_check()
@@ -536,6 +616,7 @@ def show_trial(current_trial):
 
             # Get pain rating
             while pain_rating.getRating() is None: # while mouse unclicked
+                pain_rating.readOnly = False
                 termination_check()
                 pain_rating.draw()
                 pain_text.draw()
@@ -565,12 +646,21 @@ while not exp_finish:
     #display welcome instructions
     # instruction_trial(instructions_text["welcome"],3)
     # instruction_trial(instructions_text["TENS_introduction"],3)
-    
     # # #display main experiment phase
     # instruction_trial(instructions_text["experiment"],10)
-    for trial in trial_order[0:5]:
-        show_trial(trial)
+    # for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
+    #     show_trial(trial)
 
+    if groupname == "naturalhistory":
+        instruction_trial(instructions_text['conditioning_naturalhistory'],5)
+    elif groupname != "naturalhistory":
+        instruction_trial(instructions_text['conditioning_socialmodel'],5)
+    
+    video_timer = core.CountdownTimer(video_stim_time)
+
+    for trial in list(filter(lambda trial: trial['phase'] == "conditioning", trial_order)):
+        show_trial(trial)
+        
     pport.setData(0) # Set all pins to 0 to shut off context, TENS, shock etc.    
     # save trial data
     save_data(trial_order)
