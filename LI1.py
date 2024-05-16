@@ -10,31 +10,39 @@ import os
 ports_live = None # Set to None if parallel ports not plugged for coding/debugging other parts of exp
 
 ### Experiment details/parameters
-## misc parameters
+## equipment parameters
 port_buffer_duration = 1 #needs about 0.5s buffer for port signal to reset 
-iti_range = [6,8]
 pain_response_duration = float("inf")
 response_hold_duration = 1 # How long the rating screen is left on the response (only used for Pain ratings)
 TENS_pulse_int = 0.1 # interval length for TENS on/off signals (e.g. 0.1 = 0.2s per pulse)
-
-## within experiment parameters
-experimentcode = "LI1"
-P_info = {"PID": ""}
-info_order = ["PID"]
-cue_colours = ([-1,0.10588,-1],[-1,-1,1]) # 2 colours taken from Kirsten EEG
-cue_colour_names = ('green','blue')
-cue_width = 200
-video_painratings_mean = {"TENS" : 81, "control": 31}
-video_painratings_spread = {"TENS" : 9, "control" : 15}
-video_painratings_buffer = 4
-video_stim_time = 60
-video_stim_iti = 6
 
 # parallel port triggers
 port_address = 0xDFD8
 pain_trig = 1 #levels and order need to be organised through CHEPS system
 scr_trig = 2
-stim_trig = {"TENS": 128, "control": 0} #Pin 8 in relay box just for the clicking sound
+tens_trig = 64
+audio_trig = {"TENS": 128, "control": 0} #Pin 8 in relay box just for the clicking sound
+
+## within experiment parameters
+experimentcode = "LI1"
+P_info = {"PID": ""}
+info_order = ["PID"]
+iti_range = [6,8]
+familiarisation_iti = 3
+cue_colours = ([-1,0.10588,-1],[-1,-1,1]) # 2 colours taken from Kirsten EEG
+cue_colour_names = ('green','blue')
+cue_positions = [(300,0),(-300,0)]
+cue_width = 200
+
+rating_scale_pos = (0,-350)
+rating_text_pos = (0,-250)
+text_height = 35 
+
+video_painratings_mean = {"TENS" : 81, "control": 31}
+video_painratings_spread = {"TENS" : 9, "control" : 15}
+video_painratings_buffer = 4
+video_stim_time = 60
+video_stim_iti = 6
 
 #calculate iti_jitter
 iti_jitter = [x * 1000 for x in iti_range]
@@ -116,6 +124,11 @@ stim_colour_names = {
     "control": cue_colour_names[-cb]
 }
 
+stim_positions = {
+    "TENS" : cue_positions[cb-1],
+    "control" : cue_positions[-cb]
+}
+
 if ports_live == True:
     pport = parallel.ParallelPort(address=port_address) #Get from device Manager
     pport.setData(0)
@@ -143,7 +156,7 @@ def instruction_trial(instructions,holdtime):
     termination_check()
     visual.TextStim(win,
                     text = instructions,
-                    height = 35,
+                    height = text_height,
                     color = "white",
                     pos = (0,0),
                     wrapWidth= 960
@@ -152,14 +165,14 @@ def instruction_trial(instructions,holdtime):
     core.wait(holdtime)
     visual.TextStim(win,
                     text = instructions,
-                    height = 35,
+                    height = text_height,
                     color = "white",
                     pos = (0,0),
                     wrapWidth= 960
                     ).draw()
     visual.TextStim(win,
                     text = instructions_text["continue"],
-                    height = 35,
+                    height = text_height,
                     color = "white",
                     pos = (0,-400)
                     ).draw()
@@ -201,7 +214,7 @@ def exit_screen(instructions):
     win.flip()
     visual.TextStim(win,
             text = instructions,
-            height = 35,
+            height = text_height,
             color = "white",
             pos = (0,0)).draw()
     win.flip()
@@ -325,58 +338,37 @@ for trialnum, trial in enumerate(trial_order, start=1):
     
 save_data(trial_order)
     
-# #Test questions
-rating_stim = { "Pain": visual.Slider(win,
-                                    pos = (0,-350),
-                                    ticks=[0,100],
-                                    labels=("Not painful","Very painful"),
-                                    granularity=0.1,
-                                    size=(600,60),
-                                    style=["rating"],
-                                    autoLog = False,
-                                    labelHeight = 30),
-                "Expectancy": visual.Slider(win,
-                                    pos = (0,-350),
-                                    ticks=[0,100],
-                                    labels=("Not painful","Very painful"),
-                                    granularity=0.1,
-                                    size=(600,60),
-                                    style=["rating"],
-                                    autoLog = False,
-                                    labelHeight = 30)}
-
-rating_stim["Pain"].marker.size = (30,30)
-rating_stim["Pain"].marker.color = "yellow"
-rating_stim["Pain"].validArea.size = (660,100)
-
-rating_stim["Expectancy"].marker.size = (30,30)
-rating_stim["Expectancy"].marker.color = "yellow"
-rating_stim["Expectancy"].validArea.size = (660,100)
-
-pain_rating = rating_stim["Pain"]
-exp_rating = rating_stim["Expectancy"]
-
 # # text stimuli
 instructions_text = {
     "welcome": "Welcome to the experiment! Please read the following instructions carefully.", 
     "TENS_introduction": "This experiment aims to investigate the effects of Transcutaneous Electrical Nerve Stimulation (TENS) on pain sensitivity. \
-        TENS may be able to increase pain sensitivity by enhancing the pain signals that travel up your arm and into your brain.\n\n\
+        TENS is designed to increase pain sensitivity by enhancing the conductivity of pain signals being sent to your brain.\n\n\
         The TENS itself is not painful, but you will feel a small sensation when it is turned on.",
-    "preexposure": "Before we begin, we will record some baseline measures. Please stay seated and stay still during this phase, as excessive movement may interfere with our readings. \n\n \
-        The TENS device may be activated intermittently, although NO thermal stimuli will be delivered during this phase.",
-    "baseline": "Before we begin, we will record some baseline measures. Please stay seated and stay still during this phase, as excessive movement may interfere with our readings. \n\n \
-        NO thermal stimuli will be delivered during this phase.",
-    "baseline_waiting": "Collecting baseline readings, please stay still",
-    "conditioning_socialmodel": "Baseline measures have been recorded, thank you for your patience. \n\n\
+    "familiarisation": "Firstly, you will be familiarised with the thermal stimuli you will be receiving in this experiment. This familiarisation procedure is necessary to ensure that participants are able to tolerate \
+        the thermal stimuli used in this experiment. The efficacy of TENS can vary across individuals, so this procedure will also demonstrate the range of how painful the thermal stimulus could be \
+        when TENS is active.\n\n \
+        In the familiarisation procedure, you will be given the opportunity to sample the thermal stimuli at a range of intensities. The machine will start at a low intensity, which will incrementally increase each level. \
+        When you are ready to receive the thermal stimulus, press the SPACEBAR to activate the machine. After receiving each thermal stimulus, you will be asked to give a pain rating for that level of heat. \
+        The familiarisation procedure will take you through 10 increasing levels of heat intensities. Although the higher levels of heat intensities may be more uncomfortable or painful, please note that \
+        the maximum level of heat is safe and unlikely to cause you any actual harm. If, however, you find the thermal stimuli intolerable at any stage, please let the experimenter know and we will \
+        terminate the experiment immediately. \n\n\
+        This procedure will proceed at your pace, so feel free to take your time to rest between heat levels.",
+    "familiarisation_finish": "Thank you for completing the familiarisation protocol. we will now proceed to the next phase of the experiment",
+    "preexposure_socialmodel": "We will now record some baseline measures. Please stay seated and still during this phase, as excessive movement may interfere with our readings. \n\n \
+        The TENS device may be activated intermittently. NO thermal stimuli will be delivered during this phase.",
+    "preexposure_naturalhistory": "Before we begin, we will record some baseline measures. Please stay seated and stay still during this phase, as excessive movement may interfere with our readings. \n\n \
+    NO thermal stimuli will be delivered during this phase.",
+    "preexposure_waiting": "Collecting baseline readings, please stay still",
+    "preexposure_completed": "Baseline measures have been recorded, thank you for your patience. \n\n\
         Please call for the experimenter to prepare for the next stage of the experiment",
-    "conditioning_naturalhistory": "Baseline measures have been recorded, thank you for your patience. \n\n\
-        Please call for the experimenter to prepare for the next stage of the experiment",
-    "experiment" : "We will now begin the main phase of the experiment. \n\n\
+    "experiment_socialmodel" : "We will now begin the main phase of the experiment. \n\n \
+        ",
+    "experiment_naturalhistory" : "We will now begin the main phase of the experiment. \n\n\
 You will now receive a series of thermal stimuli and your task is to rate the intensity of each thermal stimulus on a rating scale. \
 This rating scale ranges from NOT PAINFUL to VERY PAINFUL. \n\n\
 All thermal stimuli will be signaled by a 10 second countdown. The heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. \
 As you are waiting for the thermal stimulus during the countdown, you will also be asked to rate how painful you expect the heat to be. After each trial there will be a brief interval to allow you to rest between thermal stimuli. \n\n\
-Please ask the experimenter if you have any questions now before proceeding.",
+Please ask the experimenter now if you have any questions before proceeding.",
     "continue" : "\n\nPress spacebar to continue",
     "end" : "This concludes the experiment. Please ask the experimenter to help remove the devices.",
     "termination" : "The experiment has been terminated. Please ask the experimenter to help remove the devices."
@@ -385,26 +377,81 @@ Please ask the experimenter if you have any questions now before proceeding.",
 # cue_demo_text = "When you are completely relaxed, press any key to start the next block..."
 
 response_instructions = {
-    "Pain": "How painful was the thermal stimulus?",
-    "Expectancy": "How painful do you expect the next thermal stimulus to be?" 
-                         }
+    "pain": "How painful was the thermal stimulus?",
+    "expectancy": "How painful do you expect the next thermal stimulus to be?",
+    "SM": "The demonstrator made the following response on this trial",
+    "familiarisation": "Press spacebar to activate the heat stimulus"
+    }
 
-pain_text = visual.TextStim(win,
-            text=response_instructions["Pain"],
-            height = 35,
-            pos = (0,-250),
-            )
-
-exp_text = visual.TextStim(win,
-            text=response_instructions["Expectancy"],
-            height = 35,
-            pos = (0,-250)
-            ) 
-baseline_text = visual.TextStim(win,
+trial_text = {
+     "pain": visual.TextStim(win,
+            text=response_instructions["pain"],
+            height = text_height,
+            pos = rating_text_pos
+            ),
+     "expectancy": visual.TextStim(win,
+            text=response_instructions["expectancy"],
+            height = text_height,
+            pos = rating_text_pos
+            ),
+     "baseline": visual.TextStim(win,
             text=instructions_text["baseline_waiting"],
-            height=35,
+            height=text_height,
             pos = (0,250)
-            )   
+            ),
+     "SMrating": visual.TextStim(win, 
+            color="white", 
+            height = text_height,
+            pos = rating_text_pos,
+            text= response_instructions["SM"]
+            )
+}
+
+# #Test questions
+rating_stim = { "familiarisation": visual.Slider(win,
+                                    pos = rating_scale_pos,
+                                    ticks=[0,50,100],
+                                    labels=(1,5,10),
+                                    granularity=0.1,
+                                    size=(600,60),
+                                    style=["rating"],
+                                    autoLog = False,
+                                    labelHeight = 30),
+               "pain": visual.Slider(win,
+                                    pos = rating_scale_pos,
+                                    ticks=[0,100],
+                                    labels=("Not painful","Very painful"),
+                                    granularity=0.1,
+                                    size=(600,60),
+                                    style=["rating"],
+                                    autoLog = False,
+                                    labelHeight = 30),
+                "expectancy": visual.Slider(win,
+                                    pos = rating_scale_pos,
+                                    ticks=[0,100],
+                                    labels=("Not painful","Very painful"),
+                                    granularity=0.1,
+                                    size=(600,60),
+                                    style=["rating"],
+                                    autoLog = False,
+                                    labelHeight = 30)}
+
+
+rating_stim["familiarisation"].marker.size = (30,30)
+rating_stim["familiarisation"].marker.color = "yellow"
+rating_stim["familiarisation"].validArea.size = (660,100)
+
+rating_stim["pain"].marker.size = (30,30)
+rating_stim["pain"].marker.color = "yellow"
+rating_stim["pain"].validArea.size = (660,100)
+
+rating_stim["expectancy"].marker.size = (30,30)
+rating_stim["expectancy"].marker.color = "yellow"
+rating_stim["expectancy"].validArea.size = (660,100)
+
+pain_rating = rating_stim["pain"]
+exp_rating = rating_stim["expectancy"]
+fam_rating = rating_stim["familiarisation"]
                                 
 # pre-draw countdown stimuli (numbers 10-1)
 countdown_text = {}
@@ -413,22 +460,25 @@ for i in range(0,11):
                             color="white", 
                             height = 50,
                             text=str(i))
-    
+
+# visual cues for TENS/control trials
 cue_stims = {"TENS" : visual.Rect(win,
                         lineColor = stim_colours["TENS"],
                         fillColor = stim_colours["TENS"],
                         width = cue_width,
                         height = cue_width,
-                        pos = (300,0),
+                        pos = stim_positions["TENS"],
                         autoLog = False),
              "control" : visual.Rect(win,
                         lineColor = stim_colours["control"],
                         fillColor = stim_colours["control"],
                         width = cue_width,
                         height = cue_width,
-                        pos = (-300,0),
+                        pos = stim_positions["control"],
                         autoLog = False)
              }
+
+#Video stimulus (Social modelling)
 video_stim = visual.MovieStim(win,
                               filename=os.path.join(script_directory, "SMconditioning.mp4"),
                               size = (400,300),
@@ -438,6 +488,51 @@ video_stim = visual.MovieStim(win,
 
 # Define button_text dictionaries
 #### Make trial functions
+def show_fam_trial(current_trial):
+    termination_check()
+    # Wait for participant to ready up for shock
+    visual.TextStim(win,
+        text=response_instructions["pain"],
+        height = 35,
+        pos = (0,0),
+        wrapWidth= 800
+        ).draw()
+    win.flip()
+    event.waitKeys(keyList = ["space"])
+    
+    # show fixation stimulus + deliver shock
+    if pport != None:
+        pport.setData(0)
+
+    fix_stim.draw()
+    win.flip()
+    
+    if pport != None:
+        pport.setData(pain_trig)
+        core.wait(port_buffer_duration)
+        pport.setData(0)
+    
+    # Get pain rating
+    while fam_rating.getRating() is None: # while mouse unclicked
+        termination_check()
+        trial_text["pain"].draw()
+        fam_rating.draw()
+        win.flip()
+         
+    pain_response_end_time = core.getTime() + response_hold_duration # amount of time for participants to adjust slider after making a response
+    
+    while core.getTime() < pain_response_end_time:
+        termination_check()
+        trial_text["pain"].draw()
+        fam_rating.draw()
+        win.flip()
+
+    current_trial["pain_response"] = fam_rating.getRating()
+    fam_rating.reset()
+    
+    win.flip()
+    core.wait(familiarisation_iti)
+    
 def show_trial(current_trial):
    
     if pport != None:
@@ -459,7 +554,7 @@ def show_trial(current_trial):
         if groupname == 'preexposure':
             while countdown_timer.getTime() > 8:
                 termination_check()
-                baseline_text.draw()
+                trial_text["baseline"].draw()
                 win.flip()
                 
             while countdown_timer.getTime() < 8 and countdown_timer.getTime() > 0: #turn on TENS at 8 seconds
@@ -468,12 +563,12 @@ def show_trial(current_trial):
                 if pport != None:
                 # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
                     if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
-                        pport.setData(stim_trig[current_trial["stimulus"]])
+                        pport.setData(audio_trig[current_trial["stimulus"]])
                     if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
                         pport.setData(0)
                         TENS_timer = countdown_timer.getTime() 
                 cue_stims[current_trial["stimulus"]].draw()
-                baseline_text.draw()
+                trial_text["baseline"].draw()
                 win.flip() 
                 
             pport.setData(0)
@@ -481,7 +576,7 @@ def show_trial(current_trial):
         if groupname != 'preexposure':
             while countdown_timer.getTime() > 0:
                 termination_check()
-                baseline_text.draw()
+                trial_text["baseline"].draw()
                 win.flip()
 
         win.flip()
@@ -510,7 +605,7 @@ def show_trial(current_trial):
             cue_stims[current_trial["stimulus"]].draw()
             
             # Ask for expectancy rating
-            exp_text.draw() 
+            trial_text["expectancy"].draw()
             exp_rating.draw()
             video_stim.draw()
             win.flip()    
@@ -529,19 +624,13 @@ def show_trial(current_trial):
                 video_painratings_mean[current_trial["stimulus"]],
                 video_painratings_spread[current_trial["stimulus"]])
         
-        pain_text_sm = visual.TextStim(win, 
-                            color="white", 
-                            height = 30,
-                            pos = (0,-250),
-                            text= "The demonstrater gave this pain rating on this trial:")
-        
         pain_rating.rating = pain_rating_sm
         pain_rating.readOnly = True
         
         iti_timer = core.CountdownTimer(video_stim_iti)
         while iti_timer.getTime() > 0:
             video_stim.draw()
-            pain_text_sm.draw()
+            trial_text["SMrating"].draw()
             pain_rating.draw()
             win.flip()
 
@@ -569,7 +658,7 @@ def show_trial(current_trial):
             if pport != None:
                 # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
                 if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
-                    pport.setData(stim_trig[current_trial["stimulus"]])
+                    pport.setData(audio_trig[current_trial["stimulus"]])
                 if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
                     pport.setData(0)
                     TENS_timer = countdown_timer.getTime() 
@@ -587,7 +676,7 @@ def show_trial(current_trial):
                         
                 # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
                 if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
-                    pport.setData(stim_trig[current_trial["stimulus"]])
+                    pport.setData(audio_trig[current_trial["stimulus"]])
                 if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
                     pport.setData(0)
                     TENS_timer = countdown_timer.getTime() 
@@ -596,7 +685,7 @@ def show_trial(current_trial):
             cue_stims[current_trial["stimulus"]].draw()
             
             # Ask for expectancy rating
-            exp_text.draw() 
+            trial_text["expectancy"].draw()
             exp_rating.draw()
             win.flip()    
 
@@ -619,7 +708,7 @@ def show_trial(current_trial):
                 pain_rating.readOnly = False
                 termination_check()
                 pain_rating.draw()
-                pain_text.draw()
+                trial_text["pain"].draw()
                 win.flip()
                     
                     
@@ -627,7 +716,7 @@ def show_trial(current_trial):
             
             while core.getTime() < pain_response_end_time:
                 termination_check()
-                pain_text.draw()
+                trial_text["pain"].draw()
                 pain_rating.draw()
                 win.flip()
                 
