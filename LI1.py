@@ -243,6 +243,23 @@ def termination_check(): #insert throughout experiment so participants can end a
 # Define trials
 trial_order = []
 
+# familiarisation trials
+num_familiarisation = 10
+
+for i in range(1, num_familiarisation + 1):
+    trial = {
+        "phase": "familiarisation",
+        "blocknum": None,
+        "stimulus": None,
+        "outcome": None,
+        "trialname": "familiarisation",
+        "exp_response": None,
+        "pain_response": None,
+        "iti" : None
+    } 
+    trial_order.append(trial)
+
+
 #pre-exposure trials
 num_TENS_preexp = 16
 
@@ -343,6 +360,7 @@ save_data(trial_order)
 # # text stimuli
 instructions_text = {
     "welcome": "Welcome to the experiment! Please read the following instructions carefully.", 
+<<<<<<< HEAD
     "TENS_introduction": "This experiment aims to investigate the effects of Transcutaneous Electrical Nerve Stimulation (TENS) on pain sensitivity. \
         TENS is designed to increase pain sensitivity by enhancing the conductivity of pain signals being sent to your brain.\n\n\
         The TENS itself is not painful, but you will feel a small sensation when it is turned on.",
@@ -354,6 +372,19 @@ instructions_text = {
         The familiarisation procedure will take you through 10 increasing levels of heat intensities. Although the higher levels of heat intensities may be more uncomfortable or painful, please note that \
         the maximum level of heat is safe and unlikely to cause you any actual harm. If, however, you find the thermal stimuli intolerable at any stage, please let the experimenter know and we will \
         terminate the experiment immediately. \n\n\
+=======
+    "TENS_introduction": "This experiment aims to investigate the effects of Transcutaneous Electrical Nerve Stimulation (TENS) on heat pain sensitivity. \
+        TENS is designed to increase pain sensitivity by enhancing the conductivity of pain signals being sent to your brain. Clinically this is used to enhance pain sensitivity in medical conditions where pain sensitivity is dampened. \
+        In the absence of medical conditions, TENS significantly amplifies pain signals, meaning stimulations will be more painful when the TENS device is active. Although the TENS itself is not painful, you will feel a small sensation when it is turned on. \n\n \
+        In this study you will receive a series of heat pain stimulations, and some heat pain stimulations will also be accompanied with TENS stimulation.",
+    "familiarisation": "Firstly, you will be familiarised with the thermal stimuli. This familiarisation procedure is necessary to ensure that participants are able to tolerate \
+        the heat pain delivered in this experiment. The thermal stimulus is delivered through the thermode attached to your forearm, which delivers heat pain by selectively stimulating pain fibres. As the density of pain fibres can vary between individuals, \
+        the pain experienced and the efficacy of TENS can also vary. As such, this familiarisation procedure will demonstrate the range of how painful the thermal stimulus could be when TENS is active for any participant.\n\n \
+        In the familiarisation procedure, you will be given the opportunity to sample the thermal stimuli at a range of intensities. The machine will start at a low intensity, which will incrementally increase each level. \
+        When you are ready to receive the thermal stimulus, press the SPACEBAR to activate the machine. After receiving each thermal stimulus, you will be asked to give a pain rating for that level of heat. \
+        The familiarisation procedure will take you through 10 increasing levels of heat intensities. Although the higher levels of heat intensities may be more uncomfortable or painful, please note that \
+        the maximum level of heat is safe and unlikely to cause you any actual harm. If, however, you find the thermal stimuli intolerable at any stage, please let the experimenter know and we will terminate the experiment immediately. \n\n\
+>>>>>>> 815fa70d0424804979c762786e66e68bd742d7a0
         This procedure will proceed at your pace, so feel free to take your time to rest between heat levels.",
     "familiarisation_finish": "Thank you for completing the familiarisation protocol. we will now proceed to the next phase of the experiment",
     "preexposure_socialmodel": "We will now record some baseline measures. Please stay seated and still during this phase, as excessive movement may interfere with our readings. \n\n \
@@ -494,7 +525,11 @@ def show_fam_trial(current_trial):
     termination_check()
     # Wait for participant to ready up for shock
     visual.TextStim(win,
+<<<<<<< HEAD
         text=response_instructions["pain"],
+=======
+        text=response_instructions["familiarisation"],
+>>>>>>> 815fa70d0424804979c762786e66e68bd742d7a0
         height = 35,
         pos = (0,0),
         wrapWidth= 800
@@ -737,11 +772,22 @@ while not exp_finish:
     #display welcome instructions
     # instruction_trial(instructions_text["welcome"],3)
     # instruction_trial(instructions_text["TENS_introduction"],3)
+<<<<<<< HEAD
+=======
+
+    for trial in list(filter(lambda trial: trial['phase'] == "familiarisation", trial_order)):
+        show_fam_trial(trial)
+>>>>>>> 815fa70d0424804979c762786e66e68bd742d7a0
     # # #display main experiment phase
     # instruction_trial(instructions_text["experiment"],10)
     # for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
     #     show_trial(trial)
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 815fa70d0424804979c762786e66e68bd742d7a0
     if groupname == "naturalhistory":
         instruction_trial(instructions_text['experiment_naturalhistory'],5)
     elif groupname != "naturalhistory":
