@@ -47,6 +47,9 @@ video_stim_iti = 6
 #calculate iti_jitter
 iti_jitter = [x * 1000 for x in iti_range]
 
+#block order needs to be randomised outside of code and inputted at beginning as blocks are manually programmed on CHEPS
+# block_order = []
+
 # Participant info input
 while True:
     try:
@@ -54,6 +57,10 @@ while True:
         if not P_info["PID"]:
             print("Participant ID cannot be empty.")
             continue
+        
+        block_order = [int(block) for block in input("Enter block order: ").split()]
+        
+        print(block_order)
             
         data_filename = P_info["PID"] + "_responses.csv"
         script_directory = os.path.dirname(os.path.abspath(__file__))  #Set the working directory to the folder the Python code is opened from
@@ -257,10 +264,17 @@ for i in range(1, num_TENS_preexp + 1):
 num_blocks_conditioning = 2
 num_blocks_extinction = 2
 
-trial_stim_blocks = [['control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'control', 'control', 'TENS', 'TENS', 'TENS', 'control'],
-               ['control', 'TENS', 'control', 'TENS', 'control', 'control', 'TENS', 'control', 'TENS', 'TENS', 'TENS', 'control', 'TENS', 'control', 'TENS', 'control'],
-               ['TENS','control','control','TENS','TENS','control','control','TENS','TENS','control','TENS','TENS','control','control','control','TENS'],
-               ['TENS','control','TENS','control','TENS','TENS','control','TENS','control','control','control','TENS','control','TENS','control','TENS']]
+conditioning_stim_blocks = [['control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'control', 'control', 'TENS', 'TENS', 'TENS', 'control'],
+                            ['control', 'TENS', 'control', 'TENS', 'control', 'control', 'TENS', 'control', 'TENS', 'TENS', 'TENS', 'control', 'TENS', 'control', 'TENS', 'control'],
+                            ['TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'TENS', 'TENS', 'control', 'control', 'control', 'TENS'],
+                            ['TENS', 'control', 'TENS', 'control', 'TENS', 'TENS', 'control', 'TENS', 'control', 'control', 'control', 'TENS', 'control', 'TENS', 'control', 'TENS']]
+
+#natural history has non-contingent pairings between high-low outcomes and stimuli, so we'll change the stimuli block 
+# and keep the outcome blocks the same since the outcome order is pre-programmed on the CHEPS
+naturalhistory_stim_blocks = [['TENS', 'TENS', 'control', 'control', 'TENS', 'control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control'],
+                              ['TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'control'],
+                              ['control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'TENS', 'control', 'control', 'TENS', 'TENS'],
+                              ['control', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'control', 'TENS']]
 
 ##need a different list to allocate high and low heat outcomes to TENS/control trials 
 #0 = TENS high, 1 = TENS low, 2 = control high, 3 = control low
@@ -270,26 +284,14 @@ conditioning_outcome_blocks = [['low','high','high','low','low','high','high','l
                                ['high','low','low','high','high','low','low','high','high','low','high','high','low','low','low','high'],
                                ['high','low','high','low','high','high','low','high','low','low','low','high','low','high','low','high']]
 
-#natural history has non-contingent pairings between high-low outcomes and stimuli
-naturalhistory_outcome_blocks = [['low','high','low','high','low','low','high','low','high','high','low','high','low','high','low','high'],
-                                 ['high','low','high','high','low','high','low','low','high','low','high','high','low','low','high','low'],
-                                 ['high','low','high','low','high','low','high','high','low','high','low','high','low','high','low','low'],
-                                 ['low','high','low','low','high','low','low','high','low','high','high','low','high','high','low','high']]
-
 #low heat for every trial in extinction regardless of stimulus
 extinction_outcome_block = ['low']*16
-
-#print out block order for experimenter to note down before experiment starts
-block_order = [0,1,2,3]
-
-random.shuffle(block_order)
-print(block_order)
 
 ### create list of trials based on trial_block order, iterating through stimulus + outcome blocks in parallel
     #create conditioning blocks, outcome dependent on natural history vs nocebo conditioning contingencies
 if groupname != "naturalhistory": 
     for block in range(1,num_blocks_conditioning+1):
-        for stimulus,outcome in zip(trial_stim_blocks[block_order[block-1]],conditioning_outcome_blocks[block_order[block-1]]):
+        for stimulus,outcome in zip(conditioning_stim_blocks[block_order[block-1]],conditioning_outcome_blocks[block_order[block-1]]):
             trial = {
                 "phase": "conditioning",
                 "blocknum": block,
@@ -304,7 +306,7 @@ if groupname != "naturalhistory":
             
 elif groupname == "naturalhistory":
     for block in range(1,num_blocks_conditioning+1):
-        for stimulus,outcome in zip(trial_stim_blocks[block_order[block-1]],naturalhistory_outcome_blocks[block_order[block-1]]):
+        for stimulus,outcome in zip(naturalhistory_stim_blocks[block_order[block-1]],conditioning_outcome_blocks[block_order[block-1]]):
             trial = {
                 "phase": "conditioning",
                 "blocknum": block,
@@ -319,7 +321,7 @@ elif groupname == "naturalhistory":
                     
 #create extinction trials, all outcomes same regardless of condition (low heat)
 for block in range(num_blocks_conditioning+1,num_blocks_conditioning+num_blocks_extinction+1):
-    for stimulus,outcome in zip(trial_stim_blocks[block_order[block-1]],extinction_outcome_block):
+    for stimulus,outcome in zip(conditioning_stim_blocks[block_order[block-1]],extinction_outcome_block):
         trial = {
             "phase": "extinction",
             "blocknum": block-num_blocks_conditioning,
@@ -395,7 +397,7 @@ trial_text = {
             pos = rating_text_pos
             ),
      "baseline": visual.TextStim(win,
-            text=instructions_text["baseline_waiting"],
+            text=instructions_text["preexposure_waiting"],
             height=text_height,
             pos = (0,250)
             ),
@@ -741,9 +743,9 @@ while not exp_finish:
     #     show_trial(trial)
 
     if groupname == "naturalhistory":
-        instruction_trial(instructions_text['conditioning_naturalhistory'],5)
+        instruction_trial(instructions_text['experiment_naturalhistory'],5)
     elif groupname != "naturalhistory":
-        instruction_trial(instructions_text['conditioning_socialmodel'],5)
+        instruction_trial(instructions_text['experiment_socialmodel'],5)
     
     video_timer = core.CountdownTimer(video_stim_time)
 
