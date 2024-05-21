@@ -360,60 +360,71 @@ save_data(trial_order)
 # # text stimuli
 instructions_text = {
     "welcome": "Welcome to the experiment! Please read the following instructions carefully.", 
-<<<<<<< HEAD
-    "TENS_introduction": "This experiment aims to investigate the effects of Transcutaneous Electrical Nerve Stimulation (TENS) on pain sensitivity. \
-        TENS is designed to increase pain sensitivity by enhancing the conductivity of pain signals being sent to your brain.\n\n\
-        The TENS itself is not painful, but you will feel a small sensation when it is turned on.",
-    "familiarisation": "Firstly, you will be familiarised with the thermal stimuli you will be receiving in this experiment. This familiarisation procedure is necessary to ensure that participants are able to tolerate \
-        the thermal stimuli used in this experiment. The efficacy of TENS can vary across individuals, so this procedure will also demonstrate the range of how painful the thermal stimulus could be \
-        when TENS is active.\n\n \
-        In the familiarisation procedure, you will be given the opportunity to sample the thermal stimuli at a range of intensities. The machine will start at a low intensity, which will incrementally increase each level. \
-        When you are ready to receive the thermal stimulus, press the SPACEBAR to activate the machine. After receiving each thermal stimulus, you will be asked to give a pain rating for that level of heat. \
-        The familiarisation procedure will take you through 10 increasing levels of heat intensities. Although the higher levels of heat intensities may be more uncomfortable or painful, please note that \
-        the maximum level of heat is safe and unlikely to cause you any actual harm. If, however, you find the thermal stimuli intolerable at any stage, please let the experimenter know and we will \
-        terminate the experiment immediately. \n\n\
-=======
-    "TENS_introduction": "This experiment aims to investigate the effects of Transcutaneous Electrical Nerve Stimulation (TENS) on heat pain sensitivity. \
-        TENS is designed to increase pain sensitivity by enhancing the conductivity of pain signals being sent to your brain. Clinically this is used to enhance pain sensitivity in medical conditions where pain sensitivity is dampened. \
-        In the absence of medical conditions, TENS significantly amplifies pain signals, meaning stimulations will be more painful when the TENS device is active. Although the TENS itself is not painful, you will feel a small sensation when it is turned on. \n\n \
-        In this study you will receive a series of heat pain stimulations, and some heat pain stimulations will also be accompanied with TENS stimulation.",
-    "familiarisation": "Firstly, you will be familiarised with the thermal stimuli. This familiarisation procedure is necessary to ensure that participants are able to tolerate \
-        the heat pain delivered in this experiment. The thermal stimulus is delivered through the thermode attached to your forearm, which delivers heat pain by selectively stimulating pain fibres. As the density of pain fibres can vary between individuals, \
-        the pain experienced and the efficacy of TENS can also vary. As such, this familiarisation procedure will demonstrate the range of how painful the thermal stimulus could be when TENS is active for any participant.\n\n \
-        In the familiarisation procedure, you will be given the opportunity to sample the thermal stimuli at a range of intensities. The machine will start at a low intensity, which will incrementally increase each level. \
-        When you are ready to receive the thermal stimulus, press the SPACEBAR to activate the machine. After receiving each thermal stimulus, you will be asked to give a pain rating for that level of heat. \
-        The familiarisation procedure will take you through 10 increasing levels of heat intensities. Although the higher levels of heat intensities may be more uncomfortable or painful, please note that \
-        the maximum level of heat is safe and unlikely to cause you any actual harm. If, however, you find the thermal stimuli intolerable at any stage, please let the experimenter know and we will terminate the experiment immediately. \n\n\
->>>>>>> 815fa70d0424804979c762786e66e68bd742d7a0
-        This procedure will proceed at your pace, so feel free to take your time to rest between heat levels.",
+    "TENS_introduction": ("This experiment aims to investigate the effects of Transcutaneous Electrical Nerve Stimulation (TENS) on heat pain sensitivity. "
+    "TENS is designed to increase pain sensitivity by enhancing the conductivity of pain signals being sent to your brain. Clinically this is used to enhance pain sensitivity in medical conditions where pain sensitivity is dampened. "
+    "In the absence of medical conditions, TENS significantly amplifies pain signals, meaning stimulations will be more painful when the TENS device is active. Although the TENS itself is not painful, you will feel a small sensation when it is turned on. \n\n"
+    "In this study you and/or another participant will receive a series of heat pain stimulations, and some heat pain stimulations will also be accompanied with TENS stimulation."),
+    
+    "familiarisation_1": ("Firstly, you will be familiarised with the thermal stimuli. This familiarisation procedure is necessary to ensure that participants are able to tolerate "
+    "the heat pain delivered in this experiment. The thermal stimulus is delivered through the thermode attached to your forearm, which delivers heat pain by selectively stimulating pain fibres.\n\n"
+    "As the density of pain fibres can vary between individuals, the pain experienced and the efficacy of TENS can also vary. "
+    "As such, this familiarisation procedure will demonstrate the range of how painful the thermal stimulus could be when TENS is active for any participant."),
+    
+    "familiarisation_2": ("In the familiarisation procedure, you will experience the thermal stimuli at a range of intensities. The machine will start at a low intensity, and incrementally increase each level. "
+    "After receiving each thermal stimulus, you will be asked to give a pain rating for that level of heat. "
+    "The familiarisation procedure will take you through 10 increasing levels of heat intensities. \n\n Although the higher levels of heat intensities may be more uncomfortable or painful, please note that "
+    "the maximum level of heat is safe and unlikely to cause you any actual harm. If, however, you find the thermal stimuli intolerable at any stage, please let the experimenter know and we will terminate the experiment immediately. "
+    "This procedure will proceed at your pace, so feel free to take your time to rest between heat levels."),
+        
     "familiarisation_finish": "Thank you for completing the familiarisation protocol. we will now proceed to the next phase of the experiment",
+    
     "preexposure_socialmodel": "We will now record some baseline measures. Please stay seated and still during this phase, as excessive movement may interfere with our readings. \n\n \
-        The TENS device may be activated intermittently. NO thermal stimuli will be delivered during this phase.",
+    The TENS device may be activated intermittently but NO thermal stimuli will be delivered during this phase.",
+        
     "preexposure_naturalhistory": "Before we begin, we will record some baseline measures. Please stay seated and stay still during this phase, as excessive movement may interfere with our readings. \n\n \
     NO thermal stimuli will be delivered during this phase.",
+    
     "preexposure_waiting": "Collecting baseline readings, please stay still",
+    
     "preexposure_completed": "Baseline measures have been recorded, thank you for your patience. \n\n\
-        Please call for the experimenter to prepare for the next stage of the experiment",
-    "experiment_socialmodel" : "We will now begin the main phase of the experiment. \n\n \
-        ",
-    "experiment_naturalhistory" : "We will now begin the main phase of the experiment. \n\n\
-You will now receive a series of thermal stimuli and your task is to rate the intensity of each thermal stimulus on a rating scale. \
-This rating scale ranges from NOT PAINFUL to VERY PAINFUL. \n\n\
-All thermal stimuli will be signaled by a 10 second countdown. The heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. \
-As you are waiting for the thermal stimulus during the countdown, you will also be asked to rate how painful you expect the heat to be. After each trial there will be a brief interval to allow you to rest between thermal stimuli. \n\n\
-Please ask the experimenter now if you have any questions before proceeding.",
+    Please call for the experimenter to prepare for the next stage of the experiment",
+        
+    "experiment_socialmodel_conditioning" : ("We will now begin the main phase of the experiment. You will now observe another participant receive a series of thermal stimuli with and without TENS. Your task is to predict how painful the other participant finds the thermal stimulus."
+    "This rating scale ranges from NOT PAINFUL to VERY PAINFUL. \n\n"
+    "All thermal stimuli will be signaled by a 10 second countdown. The heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
+    "To make clear whether the TENS is on or not, TENS will be indicated by a " + stim_colour_names["TENS"] + "square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + "square. "
+    "As the other participant waits for the thermal stimulus during the countdown, you will be asked to rate how painful you expect their heat to be. After each trial you will find out what pain rating they actually responded with. \n\n"
+    "Please ask the experimenter now if you have any questions before proceeding."),
+    
+    "experiment_socialmodel_extinction" : ("You will now receive a series of thermal stimuli and rate the intensity of each thermal stimulus. "
+    "Similarly to the other participant, the thermal stimuli will be signaled by a 10 second countdown and the heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
+    "To make clear whether the TENS is on or not, TENS will be indicated by a " + stim_colour_names["TENS"] + "square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + "square. "
+    "During the countdown, you will also be asked to rate how painful you expect the heat to be. After each trial there will also be a brief interval to allow you to rest between thermal stimuli. "
+    "You will also receive a brief rest between blocks of trials where the experimenter will move the thermode to another location on your arm. \n\n"
+    "Please ask the experimenter now if you have any questions before proceeding."),
+    
+    "experiment_naturalhistory" : ("We will now begin the main phase of the experiment. \n\n"
+    "You will now receive a series of thermal stimuli and your task is to rate the intensity of each thermal stimulus on a rating scale. This rating scale ranges from NOT PAINFUL to VERY PAINFUL. \n\n"
+    "All thermal stimuli will be signaled by a 10 second countdown. The heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
+    "To make clear whether the TENS is on or not, TENS activation will be indicated by a " + stim_colour_names["TENS"] + "square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + "square. "
+    "As you are waiting for the thermal stimulus during the countdown, you will also be asked to rate how painful you expect the heat to be. After each trial there will also be a brief interval to allow you to rest between thermal stimuli. "
+    "You will also receive a brief rest between blocks of trials where the experimenter will move the thermode to another location on your arm. \n\n"
+    "Please ask the experimenter now if you have any questions before proceeding."),
+    
     "continue" : "\n\nPress spacebar to continue",
+    
     "end" : "This concludes the experiment. Please ask the experimenter to help remove the devices.",
+    
     "termination" : "The experiment has been terminated. Please ask the experimenter to help remove the devices."
 }
 
 # cue_demo_text = "When you are completely relaxed, press any key to start the next block..."
 
 response_instructions = {
-    "pain": "How painful was the thermal stimulus?",
-    "expectancy": "How painful do you expect the next thermal stimulus to be?",
+    "pain": "How painful was the heat?",
+    "expectancy": "How painful do you expect the thermal stimulus to be?",
     "SM": "The demonstrator made the following response on this trial",
-    "familiarisation": "Press spacebar to activate the heat stimulus"
+    "familiarisation": "When you are ready to receive the thermal stimulus, press the SPACEBAR to activate the thermal stimulus. "
     }
 
 trial_text = {
@@ -427,7 +438,7 @@ trial_text = {
             height = text_height,
             pos = rating_text_pos
             ),
-     "baseline": visual.TextStim(win,
+     "preexposure": visual.TextStim(win,
             text=instructions_text["preexposure_waiting"],
             height=text_height,
             pos = (0,250)
@@ -525,11 +536,7 @@ def show_fam_trial(current_trial):
     termination_check()
     # Wait for participant to ready up for shock
     visual.TextStim(win,
-<<<<<<< HEAD
-        text=response_instructions["pain"],
-=======
         text=response_instructions["familiarisation"],
->>>>>>> 815fa70d0424804979c762786e66e68bd742d7a0
         height = 35,
         pos = (0,0),
         wrapWidth= 800
@@ -591,7 +598,7 @@ def show_trial(current_trial):
         if groupname == 'preexposure':
             while countdown_timer.getTime() > 8:
                 termination_check()
-                trial_text["baseline"].draw()
+                trial_text["preexposure"].draw()
                 win.flip()
                 
             while countdown_timer.getTime() < 8 and countdown_timer.getTime() > 0: #turn on TENS at 8 seconds
@@ -605,7 +612,7 @@ def show_trial(current_trial):
                         pport.setData(0)
                         TENS_timer = countdown_timer.getTime() 
                 cue_stims[current_trial["stimulus"]].draw()
-                trial_text["baseline"].draw()
+                trial_text["preexposure"].draw()
                 win.flip() 
                 
             pport.setData(0)
@@ -613,7 +620,7 @@ def show_trial(current_trial):
         if groupname != 'preexposure':
             while countdown_timer.getTime() > 0:
                 termination_check()
-                trial_text["baseline"].draw()
+                trial_text["preexposure"].draw()
                 win.flip()
 
         win.flip()
@@ -770,35 +777,49 @@ exp_finish = None
 while not exp_finish:
     termination_check()
     #display welcome instructions
-    # instruction_trial(instructions_text["welcome"],3)
-    # instruction_trial(instructions_text["TENS_introduction"],3)
-<<<<<<< HEAD
-=======
-
+    
+    instruction_trial(instructions_text["welcome"],3)
+    instruction_trial(instructions_text["TENS_introduction"],5)
+    instruction_trial(instructions_text["familiarisation_1"],5)
+    instruction_trial(instructions_text["familiarisation_2"],5)
+    
     for trial in list(filter(lambda trial: trial['phase'] == "familiarisation", trial_order)):
         show_fam_trial(trial)
->>>>>>> 815fa70d0424804979c762786e66e68bd742d7a0
+    show_fam_trial
+    
+    instruction_trial(instructions_text["familiarisation_finish"],2)
+    
+    #pre-exposure phase
+    if groupname == "naturalhistory":
+        instruction_trial(instructions_text["preexposure_naturalhistory"],5)
+    elif groupname != "naturalhistory":
+        instruction_trial(instructions_text["preexposure_socialmodel"],5)
+    
+    for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
+         show_trial(trial)
+
+    instruction_trial(instructions_text["preexposure_completed"],3)
+    
     # # #display main experiment phase
-    # instruction_trial(instructions_text["experiment"],10)
-    # for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
-    #     show_trial(trial)
-
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 815fa70d0424804979c762786e66e68bd742d7a0
     if groupname == "naturalhistory":
         instruction_trial(instructions_text['experiment_naturalhistory'],5)
     elif groupname != "naturalhistory":
         instruction_trial(instructions_text['experiment_socialmodel'],5)
-    
-    video_timer = core.CountdownTimer(video_stim_time)
+
+    # video_timer = core.CountdownTimer(video_stim_time)
 
     for trial in list(filter(lambda trial: trial['phase'] == "conditioning", trial_order)):
         show_trial(trial)
+    
+    if groupname != "naturalhistory":
+        instruction_trial(instructions_text["experiment_socialmodel_extinction"])
+    
+    for trial in list(filter(lambda trial: trial['phase'] == "extinction", trial_order)):
+        show_trial(trial)
         
-    pport.setData(0) # Set all pins to 0 to shut off context, TENS, shock etc.    
+    if pport != None:
+        pport.setData(0)
+        
     # save trial data
     save_data(trial_order)
     exit_screen(instructions_text["end"])
