@@ -17,9 +17,9 @@ response_hold_duration = 1 # How long the rating screen is left on the response 
 TENS_pulse_int = 0.1 # interval length for TENS on/off signals (e.g. 0.1 = 0.2s per pulse)
 
 # parallel port triggers
-port_address = 0xDFD8
-pain_trig = 1 #levels and order need to be organised through CHEPS system
-scr_trig = 2
+port_address = 0x3FF88
+pain_trig = 2 #levels and order need to be organised through CHEPS system
+scr_trig = 1
 tens_trig = 64
 audio_trig = {"TENS": 128, "control": 0} #Pin 8 in relay box just for the clicking sound
 
@@ -39,7 +39,7 @@ rating_text_pos = (0,-250)
 text_height = 35 
 
 video_painratings_mean = {"TENS" : 81, "control": 31}
-video_painratings_spread = {"TENS" : 9, "control" : 15}
+video_painratings_spread = {"TENS" : 10, "control" : 10}
 video_painratings_buffer = 4
 video_stim_time = 60
 video_stim_iti = 6
@@ -394,7 +394,15 @@ instructions_text = {
     "All thermal stimuli will be signaled by a 10 second countdown. The heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
     "To make clear whether the TENS is on or not, TENS will be indicated by a " + stim_colour_names["TENS"] + "square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + "square. "
     "As the other participant waits for the thermal stimulus during the countdown, you will be asked to rate how painful you expect their heat to be. After each trial you will find out what pain rating they actually responded with. \n\n"
-    "Please ask the experimenter now if you have any questions before proceeding."),
+    "Please call for the experimenter now to set up the connection with the other participant."),
+    
+    "experiment_socialmodel_webcam_waiting" : ("Waiting for connection"),
+    
+    "experiment_socialmodel_webcam_ready" : ("Connection found !\n\n"
+                                             "Press SPACEBAR to go live"),
+    
+    "experiment_socialmodel_webcam_finish" : ("Observation phase completed!\n\n"
+                                              "Connection ended."),
     
     "experiment_socialmodel_extinction" : ("You will now receive a series of thermal stimuli and rate the intensity of each thermal stimulus. "
     "Similarly to the other participant, the thermal stimuli will be signaled by a 10 second countdown and the heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
@@ -528,7 +536,8 @@ video_stim = visual.MovieStim(win,
                               size = (400,300),
                               pos = (0,250),
                               volume = 1.0,
-                              autoStart=True)
+                              autoStart=True,
+                              loop = False)
 
 # Define button_text dictionaries
 #### Make trial functions
@@ -577,30 +586,35 @@ def show_fam_trial(current_trial):
     win.flip()
     core.wait(familiarisation_iti)
     
-def show_trial(current_trial):
+def show_trial(current_trial,
+               trialtype,
+               video = None):
    
     if pport != None:
         pport.setData(0)
         
-    win.flip()
+
     
-    #set ITI for trial
-    if current_trial["phase"] == "conditioning" and current_trial["groupname"] != "naturalhistory":
+    if trialtype == "socialmodel":
         iti = video_stim_iti
-    else:
+    else: 
         iti = random.randint(*iti_jitter) / 1000
+        
+    win.flip()
     
     # Set the initial countdown time to 10 seconds
     countdown_timer = core.CountdownTimer(10)  
 
     #if pre-exposure, only show and activate TENS
-    if current_trial["trialname"] == "preexposure":  
+    if trialtype == "preexposure":  
         if groupname == 'preexposure':
             while countdown_timer.getTime() > 8:
                 termination_check()
                 trial_text["preexposure"].draw()
                 win.flip()
                 
+            TENS_timer = countdown_timer.getTime() + TENS_pulse_int
+                            
             while countdown_timer.getTime() < 8 and countdown_timer.getTime() > 0: #turn on TENS at 8 seconds
                 termination_check()
                 
@@ -614,10 +628,11 @@ def show_trial(current_trial):
                 cue_stims[current_trial["stimulus"]].draw()
                 trial_text["preexposure"].draw()
                 win.flip() 
+            
+            if pport != None:    
+                pport.setData(0)
                 
-            pport.setData(0)
-                
-        if groupname != 'preexposure':
+        elif groupname != 'preexposure':
             while countdown_timer.getTime() > 0:
                 termination_check()
                 trial_text["preexposure"].draw()
@@ -627,31 +642,31 @@ def show_trial(current_trial):
         core.wait(iti)   
         current_trial["iti"] = iti
         
-    # if current_trial["phase"] == "conditioning" and current_trial["groupname"] != "naturalhistory":
-    if current_trial["phase"] == "conditioning" and current_trial["groupname"] != "naturalhistory":
+# social modelling conditioning trials
+    if trialtype == "socialmodel":
         while countdown_timer.getTime() > 8:
             termination_check()
             countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
-            video_stim.draw()
+            video.draw()
             win.flip()
             
         while countdown_timer.getTime() < 8 and countdown_timer.getTime() > 7: #turn on TENS at 8 seconds
             termination_check()
             countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
             cue_stims[current_trial["stimulus"]].draw()
-            video_stim.draw()
+            video.draw()
             win.flip()
 
         while countdown_timer.getTime() < 7 and countdown_timer.getTime() > 0: #ask for expectancy at 7 seconds
             termination_check()
             countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
-            video_stim.draw()
+            video.draw()
             cue_stims[current_trial["stimulus"]].draw()
             
             # Ask for expectancy rating
             trial_text["expectancy"].draw()
             exp_rating.draw()
-            video_stim.draw()
+            video.draw()
             win.flip()    
 
         current_trial["exp_response"] = exp_rating.getRating() #saves the expectancy response for that trial
@@ -660,7 +675,7 @@ def show_trial(current_trial):
         buffer_timer = core.CountdownTimer(video_painratings_buffer)   
                        
         while buffer_timer.getTime() > 0:
-            video_stim.draw()
+            video.draw()
             win.flip() 
 
         # present social model's pain rating 
@@ -671,9 +686,10 @@ def show_trial(current_trial):
         pain_rating.rating = pain_rating_sm
         pain_rating.readOnly = True
         
-        iti_timer = core.CountdownTimer(video_stim_iti)
+        iti_timer = core.CountdownTimer(iti)
+        
         while iti_timer.getTime() > 0:
-            video_stim.draw()
+            video.draw()
             trial_text["SMrating"].draw()
             pain_rating.draw()
             win.flip()
@@ -688,7 +704,7 @@ def show_trial(current_trial):
             
     #if it's a conditioning/extinction trial, do regular 10 second countdown with stimuli + pain stimulus etc.  
       
-    else: 
+    elif trialtype == "standard": 
         while countdown_timer.getTime() > 8:
             termination_check()
             countdown_text[str(int(math.ceil(countdown_timer.getTime())))].draw()
@@ -776,8 +792,8 @@ exp_finish = None
 # Run experiment
 while not exp_finish:
     termination_check()
-    #display welcome instructions
     
+    #introduce TENS and run familiarisation procedure
     instruction_trial(instructions_text["welcome"],3)
     instruction_trial(instructions_text["TENS_introduction"],5)
     instruction_trial(instructions_text["familiarisation_1"],5)
@@ -792,31 +808,50 @@ while not exp_finish:
     #pre-exposure phase
     if groupname == "naturalhistory":
         instruction_trial(instructions_text["preexposure_naturalhistory"],5)
+    
+        for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
+            show_trial(trial,"preexposure")
+            
+        instruction_trial(instructions_text['experiment_naturalhistory'],5)
+        
+        for trial in list(filter(lambda trial: trial['phase'] == "conditioning", trial_order)):
+            show_trial(trial,"standard")
+    
+        for trial in list(filter(lambda trial: trial['phase'] == "extinction", trial_order)):
+            show_trial(trial,"standard")
+         
     elif groupname != "naturalhistory":
         instruction_trial(instructions_text["preexposure_socialmodel"],5)
-    
-    for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
-         show_trial(trial)
-
-    instruction_trial(instructions_text["preexposure_completed"],3)
-    
-    # # #display main experiment phase
-    if groupname == "naturalhistory":
-        instruction_trial(instructions_text['experiment_naturalhistory'],5)
-    elif groupname != "naturalhistory":
-        instruction_trial(instructions_text['experiment_socialmodel'],5)
-
-    # video_timer = core.CountdownTimer(video_stim_time)
-
-    for trial in list(filter(lambda trial: trial['phase'] == "conditioning", trial_order)):
-        show_trial(trial)
-    
-    if groupname != "naturalhistory":
-        instruction_trial(instructions_text["experiment_socialmodel_extinction"])
-    
-    for trial in list(filter(lambda trial: trial['phase'] == "extinction", trial_order)):
-        show_trial(trial)
         
+        for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
+            show_trial(trial,"preexposure")
+
+        instruction_trial(instructions_text["preexposure_completed"],3)
+        instruction_trial(instructions_text['experiment_socialmodel_conditioning'],5)
+        instruction_trial(instructions_text["experiment_socialmodel_webcam_ready"],1)
+        
+        #set up 'webcam' for social model condition
+        
+        for trial in list(filter(lambda trial: trial['phase'] == "conditioning", trial_order)):
+            show_trial(trial,
+                    trialtype="socialmodel",
+                    video=video_stim)
+        
+        #keep video going and then flip at end:
+        video_stim.draw()
+        win.flip()
+        
+        if video_stim.isFinished == True: 
+            video_stim.stop()
+        win.flip()
+        
+        instruction_trial(instructions_text["experiment_socialmodel_webcam_finish"],3)
+        
+        instruction_trial(instructions_text["experiment_socialmodel_extinction"],10)
+
+        for trial in list(filter(lambda trial: trial['phase'] == "extinction", trial_order)):
+            show_trial(trial,"standard")
+
     if pport != None:
         pport.setData(0)
         
