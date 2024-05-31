@@ -5,7 +5,7 @@ import math
 import random
 import csv
 import os
-
+import cv2
 
 ports_live = None # Set to None if parallel ports not plugged for coding/debugging other parts of exp
 
@@ -43,12 +43,14 @@ video_painratings_spread = {"TENS" : 10, "control" : 10}
 video_painratings_buffer = 4
 video_stim_time = 60
 video_stim_iti = 6
+video_stim_pos = (0,250)
+video_stim_size = (400,300)
+
+webcam_stim_pos = (0,-250)
+webcam_stim_size = (400,300)
 
 #calculate iti_jitter
 iti_jitter = [x * 1000 for x in iti_range]
-
-#block order needs to be randomised outside of code and inputted at beginning as blocks are manually programmed on CHEPS
-# block_order = []
 
 # Participant info input
 while True:
@@ -117,6 +119,8 @@ while True:
         print("Participant info input canceled.")
         break  # Exit the loop if the participant info input is canceled
 
+exp_finish = None
+
 # get date and time of experiment start
 datetime = time.strftime("%Y-%m-%d_%H.%M.%S")
 
@@ -159,8 +163,12 @@ fix_stim = visual.TextStim(win,
                             font = "Roboto Mono Medium")
 
 #create instruction trials
-def instruction_trial(instructions,holdtime): 
+def instruction_trial(instructions,
+                      holdtime=0,
+                      key = "space",
+                      buttontext = "\n\nPress spacebar to continue"): 
     termination_check()
+    
     visual.TextStim(win,
                     text = instructions,
                     height = text_height,
@@ -177,14 +185,15 @@ def instruction_trial(instructions,holdtime):
                     pos = (0,0),
                     wrapWidth= 960
                     ).draw()
+    
     visual.TextStim(win,
-                    text = instructions_text["continue"],
+                    text = buttontext,
                     height = text_height,
                     color = "white",
                     pos = (0,-400)
                     ).draw()
     win.flip()
-    event.waitKeys(keyList=["space"])
+    event.waitKeys(keyList=key)
     win.flip()
     
     core.wait(2)
@@ -266,7 +275,7 @@ num_TENS_preexp = 16
 for i in range(1, num_TENS_preexp + 1):
     trial = {
         "phase": "preexposure",
-        "blocknum": 1,
+        "blocknum": None,
         "stimulus": "TENS",
         "outcome": "none",
         "trialname": "preexposure",
@@ -341,7 +350,7 @@ for block in range(num_blocks_conditioning+1,num_blocks_conditioning+num_blocks_
     for stimulus,outcome in zip(conditioning_stim_blocks[block_order[block-1]],extinction_outcome_block):
         trial = {
             "phase": "extinction",
-            "blocknum": block-num_blocks_conditioning,
+            "blocknum": block,
             "stimulus": stimulus,
             "outcome": outcome,
             "trialname": str(stimulus) + "_" + str(outcome),
@@ -389,14 +398,14 @@ instructions_text = {
     "preexposure_completed": "Baseline measures have been recorded, thank you for your patience. \n\n\
     Please call for the experimenter to prepare for the next stage of the experiment",
         
-    "experiment_socialmodel_conditioning" : ("We will now begin the main phase of the experiment. You will now observe another participant receive a series of thermal stimuli with and without TENS. Your task is to predict how painful the other participant finds the thermal stimulus."
+    "experiment_socialmodel_conditioning" : ("We will now begin the main phase of the experiment. You will observe another participant receive a series of thermal stimuli with and without TENS. Your task is to predict how painful the other participant finds the thermal stimulus."
     "This rating scale ranges from NOT PAINFUL to VERY PAINFUL. \n\n"
     "All thermal stimuli will be signaled by a 10 second countdown. The heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
     "To make clear whether the TENS is on or not, TENS will be indicated by a " + stim_colour_names["TENS"] + "square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + "square. "
     "As the other participant waits for the thermal stimulus during the countdown, you will be asked to rate how painful you expect their heat to be. After each trial you will find out what pain rating they actually responded with. \n\n"
-    "Please call for the experimenter now to set up the connection with the other participant."),
+    "Please call for the experimenter now to set up the stream with the other participant."),
     
-    "experiment_socialmodel_webcam_waiting" : ("Waiting for connection"),
+    "experiment_socialmodel_webcam_waiting" : ("Waiting for connection..."),
     
     "experiment_socialmodel_webcam_ready" : ("Connection found !\n\n"
                                              "Press SPACEBAR to go live"),
@@ -419,7 +428,9 @@ instructions_text = {
     "You will also receive a brief rest between blocks of trials where the experimenter will move the thermode to another location on your arm. \n\n"
     "Please ask the experimenter now if you have any questions before proceeding."),
     
-    "continue" : "\n\nPress spacebar to continue",
+    "blockrest" : "This is a rest interval. Please call for the experimenter to adjust the thermode.", 
+    
+    "blockresume" : "Feel free to take as much as rest as necessary before starting the next block.",
     
     "end" : "This concludes the experiment. Please ask the experimenter to help remove the devices.",
     
@@ -533,8 +544,8 @@ cue_stims = {"TENS" : visual.Rect(win,
 #Video stimulus (Social modelling)
 video_stim = visual.MovieStim(win,
                               filename=os.path.join(script_directory, "SMconditioning.mp4"),
-                              size = (400,300),
-                              pos = (0,250),
+                              size = video_stim_size,
+                              pos = video_stim_pos,
                               volume = 1.0,
                               autoStart=True,
                               loop = False)
@@ -786,78 +797,206 @@ def show_trial(current_trial,
             win.flip()
             core.wait(iti)
             current_trial["iti"] = iti
+            
+def webcam_waiting(waittime = 1):
+    termination_check()
+    global exp_finish
+    # setup webcam feed
+    webcam_feed = cv2.VideoCapture(0)
+    
+    if not webcam_feed.isOpened():
+        print("Failed to open webcam.")
+        exp_finish = True
+        return
+    
 
-exp_finish = None
+    waiting_text = visual.TextStim(win,
+                        text=instructions_text['experiment_socialmodel_webcam_waiting'],
+                        height = 35,
+                        pos = video_stim_pos,
+                        wrapWidth= 800
+                        )
+    ready_text = visual.TextStim(win,
+                        text=instructions_text['experiment_socialmodel_webcam_ready'],
+                        height = 35,
+                        pos = video_stim_pos,
+                        wrapWidth= 800
+                        )
+    waittimer = core.CountdownTimer(waittime)  
+    
+    while waittimer.getTime() > 0:
+        termination_check()
+        # capture each frame of webcam feed in RGB
+        ret, webcam_frame = webcam_feed.read() 
+        if not ret: #if there is no image returned from webcam_feed.read(), break loop and print error message
+            print("failed to capture image")
+            exp_finish = True
+            break
+        
+        webcam_frame = cv2.flip(webcam_frame,-1) 
+        webcam_frame = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
+        ## Normalize the frame to be in the range -1 to 1
+        webcam_frame = webcam_frame / 255.0
+        webcam_stim = visual.ImageStim(win,
+                                       image = webcam_frame,
+                                       pos = webcam_stim_pos,
+                                       size = webcam_stim_size    
+                                       )
+        webcam_stim.draw()
+        waiting_text.draw()     
+        win.flip()
+    
+    space_pressed = False
+        
+    while not space_pressed:
+        termination_check()
+        # capture each frame of webcam feed in RGB
+        ret, webcam_frame = webcam_feed.read() 
+        if not ret: #if there is no image returned from webcam_feed.read(), break loop and print error message
+            print("failed to capture image")
+            exp_finish = True
+            break
+        
+        webcam_frame = cv2.flip(webcam_frame,-1) 
+        webcam_frame = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
+        ## Normalize the frame to be in the range -1 to 1
+        webcam_frame = webcam_frame / 255.0
+        webcam_stim = visual.ImageStim(win,
+                                       image = webcam_frame,
+                                       pos = webcam_stim_pos,
+                                       size = webcam_stim_size    
+                                       )
+        webcam_stim.draw()
+        ready_text.draw()     
+        win.flip()
+        # Check for key presses
+        keys = event.getKeys()
+        if 'space' in keys:
+            space_pressed = True
+            
+def show_socialmodel(playtime = 10,socialmodel_stim = video_stim):
+    termination_check() 
+    webcam_feed = cv2.VideoCapture(0)
+    sm_timer = core.CountdownTimer(playtime)
+    while sm_timer > 0: 
+        # capture each frame of webcam feed in RGB
+        ret, webcam_frame = webcam_feed.read() 
+        if not ret: #if there is no image returned from webcam_feed.read(), break loop and print error message
+            print("failed to capture image")
+            exp_finish = True
+            break
+        
+        webcam_frame = cv2.flip(webcam_frame,-1) 
+        webcam_frame = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2RGB)
+        ## Normalize the frame to be in the range -1 to 1
+        webcam_frame = webcam_frame / 255.0
+        webcam_stim = visual.ImageStim(win,
+                                       image = webcam_frame,
+                                       pos = webcam_stim_pos,
+                                       size = webcam_stim_size    
+                                       )
+        socialmodel_stim.draw()
+        webcam_stim.draw()
+        win.flip()
+        
 
 # Run experiment
 while not exp_finish:
     termination_check()
     
-    #introduce TENS and run familiarisation procedure
-    instruction_trial(instructions_text["welcome"],3)
-    instruction_trial(instructions_text["TENS_introduction"],5)
-    instruction_trial(instructions_text["familiarisation_1"],5)
-    instruction_trial(instructions_text["familiarisation_2"],5)
+    lastblocknum = None
     
-    for trial in list(filter(lambda trial: trial['phase'] == "familiarisation", trial_order)):
-        show_fam_trial(trial)
-    show_fam_trial
+    # #introduce TENS and run familiarisation procedure
+    # instruction_trial(instructions_text["welcome"],3)
+    # instruction_trial(instructions_text["TENS_introduction"],5)
+    # instruction_trial(instructions_text["familiarisation_1"],5)
+    # instruction_trial(instructions_text["familiarisation_2"],5)
     
-    instruction_trial(instructions_text["familiarisation_finish"],2)
+    # for trial in list(filter(lambda trial: trial['phase'] == "familiarisation", trial_order)):
+    #     show_fam_trial(trial)
+    # show_fam_trial
     
-    #pre-exposure phase
-    if groupname == "naturalhistory":
-        instruction_trial(instructions_text["preexposure_naturalhistory"],5)
+    # instruction_trial(instructions_text["familiarisation_finish"],2)
     
-        for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
-            show_trial(trial,"preexposure")
+    # #pre-exposure phase
+    # if groupname == "naturalhistory":
+    #     instruction_trial(instructions_text["preexposure_naturalhistory"],5)
+    
+    #     for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
+    #         show_trial(trial,"preexposure")
             
-        instruction_trial(instructions_text['experiment_naturalhistory'],5)
+    #     instruction_trial(instructions_text['experiment_naturalhistory'],5)
         
-        for trial in list(filter(lambda trial: trial['phase'] == "conditioning", trial_order)):
-            show_trial(trial,"standard")
+        
+    # # run conditioning and extinction phases normally for natural history group
+    #     for blocknum in trial_order:
+    #         if blocknum > 1:
+    #             instruction_trial(instructions_text["blockrest"],10,"enter",None)
+    #             instruction_trial(instructions_text["blockresume"],2)
+                
+    #         for trial in list(filter(lambda trial: trial['phase'] == "conditioning" and trial[blocknum == block], trial_order)):
+    #             show_trial(trial,"standard")
+        
+    #         for trial in list(filter(lambda trial: trial['phase'] == "extinction" and trial[blocknum == block], trial_order)):
+    #             show_trial(trial,"standard")
+        
+    # elif groupname != "naturalhistory":
+        # instruction_trial(instructions_text["preexposure_socialmodel"],5)
+        
+        # for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
+        #     show_trial(trial,"preexposure")
+
+        # instruction_trial(instructions_text["preexposure_completed"],3)
+    instruction_trial(instructions_text['experiment_socialmodel_conditioning'],5)
+        
+    # set up 'webcam' for social model condition
+    webcam_waiting(5)
+
+    # start video 
     
-        for trial in list(filter(lambda trial: trial['phase'] == "extinction", trial_order)):
-            show_trial(trial,"standard")
-         
-    elif groupname != "naturalhistory":
-        instruction_trial(instructions_text["preexposure_socialmodel"],5)
-        
-        for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
-            show_trial(trial,"preexposure")
-
-        instruction_trial(instructions_text["preexposure_completed"],3)
-        instruction_trial(instructions_text['experiment_socialmodel_conditioning'],5)
-        instruction_trial(instructions_text["experiment_socialmodel_webcam_ready"],1)
-        
-        #set up 'webcam' for social model condition
-        
-        for trial in list(filter(lambda trial: trial['phase'] == "conditioning", trial_order)):
-            show_trial(trial,
-                    trialtype="socialmodel",
-                    video=video_stim)
-        
-        #keep video going and then flip at end:
-        video_stim.draw()
-        win.flip()
-        
-        if video_stim.isFinished == True: 
-            video_stim.stop()
-        win.flip()
-        
-        instruction_trial(instructions_text["experiment_socialmodel_webcam_finish"],3)
-        
-        instruction_trial(instructions_text["experiment_socialmodel_extinction"],10)
-
-        for trial in list(filter(lambda trial: trial['phase'] == "extinction", trial_order)):
-            show_trial(trial,"standard")
+    # for blocknum in trial_order:
+    #     if blocknum > 1:
+    #         instruction_trial(instructions_text["blockrest"],10,"enter",None)
+    #         instruction_trial(instructions_text["blockresume"],2)
+            
+    #     for trial in list(filter(lambda trial: trial['phase'] == "conditioning", trial_order)):
+    #         show_trial(trial,
+    #                 trialtype="socialmodel",
+    #                 video=video_stim)
+    
+    #     lastblocknum = None
+    
+    # for trial in trial_order:
+    #     current_blocknum = trial['blocknum']
+    #     if lastblocknum is not None and current_blocknum != lastblocknum:
+    #         lastblocknum = current_blocknum
+    #         instruction_trial(instructions_text["blockrest"],10,"enter",None)
+    #     show_trial(trial)
+    
+    # #keep video going after conditioning phase and then flip at end:
+    # video_stim.draw()
+    # win.flip()
+    
+    # if video_stim.isFinished == True: 
+    #     video_stim.stop()
+    # win.flip()
+    
+    # instruction_trial(instructions_text["experiment_socialmodel_webcam_finish"],3)
+    
+    # instruction_trial(instructions_text["experiment_socialmodel_extinction"],10)
+    # for blocknum in trial_order:
+    #     if blocknum > num_blocks_conditioning:
+    #         instruction_trial(instructions_text["blockrest"],10,"enter",None)
+    #         instruction_trial(instructions_text["blockresume"],2)
+    #     for trial in list(filter(lambda trial: trial['phase'] == "extinction", trial_order)):
+    #         show_trial(trial,"standard")
 
     if pport != None:
         pport.setData(0)
         
     # save trial data
     save_data(trial_order)
-    exit_screen(instructions_text["end"])
+    # exit_screen(instructions_text["end"])
     
     exp_finish = True
     
