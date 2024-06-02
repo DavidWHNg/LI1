@@ -27,7 +27,8 @@ audio_trig = {"TENS": 128, "control": 0} #Pin 8 in relay box just for the clicki
 experimentcode = "LI1"
 P_info = {"PID": ""}
 info_order = ["PID"]
-iti_range = [6,8]
+# iti_range = [6,8]
+iti = 6
 familiarisation_iti = 3
 cue_colours = ([-1,0.10588,-1],[-1,-1,1]) # 2 colours taken from Kirsten EEG
 cue_colour_names = ('green','blue')
@@ -35,12 +36,12 @@ cue_positions = [(300,0),(-300,0)]
 cue_width = 200
 
 rating_scale_pos = (0,-350)
-rating_text_pos = (0,-250)
-text_height = 35 
+rating_text_pos = (0,-250) 
+text_height = 30 
 
 video_painratings_mean = {"TENS" : 81, "control": 31}
 video_painratings_spread = {"TENS" : 10, "control" : 10}
-video_painratings_buffer = 4
+video_painratings_buffer = 5
 video_stim_time = 60
 video_stim_iti = 6
 video_stim_pos = (0,250)
@@ -50,7 +51,7 @@ webcam_stim_pos = (0,-250)
 webcam_stim_size = (400,300)
 
 #calculate iti_jitter
-iti_jitter = [x * 1000 for x in iti_range]
+# iti_jitter = [x * 1000 for x in iti_range]
 
 # Participant info input
 while True:
@@ -88,29 +89,29 @@ while True:
         # cb == 2 == TENS = BLUE, control = GREEN
             
         else:
-            if int(P_info["PID"]) % 6 == 0:
+            if int(P_info["PID"]) % 6 == 1:
                 group = 1
-                cb = 1 
-                groupname = "preexposure"
-            elif int(P_info["PID"]) % 6 == 1:
-                group = 2
                 cb = 1 
                 groupname = "socialmodel"
             elif int(P_info["PID"]) % 6 == 2:
+                group = 2
+                cb = 1 
+                groupname = "preexposure"
+            elif int(P_info["PID"]) % 6 == 3:
                 group = 3
                 cb = 1 
                 groupname = "naturalhistory"
-            elif int(P_info["PID"]) % 6 == 3:
-                group = 1
-                cb = 2 
-                groupname = "preexposure"
             elif int(P_info["PID"]) % 6 == 4:
-                group = 2
+                group = 1
                 cb = 2 
                 groupname = "socialmodel"
             elif int(P_info["PID"]) % 6 == 5:
-                group = 3
+                group = 2
                 cb = 2 
+                groupname = "preexposure"
+            elif int(P_info["PID"]) % 6 == 0:
+                group = 3
+                cb = 2
                 groupname = "naturalhistory"
             
             break  # Exit the loop if the participant ID is valid
@@ -118,8 +119,6 @@ while True:
     except KeyboardInterrupt:
         print("Participant info input canceled.")
         break  # Exit the loop if the participant info input is canceled
-
-exp_finish = None
 
 # get date and time of experiment start
 datetime = time.strftime("%Y-%m-%d_%H.%M.%S")
@@ -253,7 +252,7 @@ def termination_check(): #insert throughout experiment so participants can end a
 trial_order = []
 
 # familiarisation trials
-num_familiarisation = 10
+num_familiarisation = 15
 
 for i in range(1, num_familiarisation + 1):
     trial = {
@@ -369,64 +368,32 @@ save_data(trial_order)
 # # text stimuli
 instructions_text = {
     "welcome": "Welcome to the experiment! Please read the following instructions carefully.", 
-    "TENS_introduction": ("This experiment aims to investigate the effects of Transcutaneous Electrical Nerve Stimulation (TENS) on heat pain sensitivity. "
-    "TENS is designed to increase pain sensitivity by enhancing the conductivity of pain signals being sent to your brain. Clinically this is used to enhance pain sensitivity in medical conditions where pain sensitivity is dampened. "
-    "In the absence of medical conditions, TENS significantly amplifies pain signals, meaning stimulations will be more painful when the TENS device is active. Although the TENS itself is not painful, you will feel a small sensation when it is turned on. \n\n"
-    "In this study you and/or another participant will receive a series of heat pain stimulations, and some heat pain stimulations will also be accompanied with TENS stimulation."),
     
     "familiarisation_1": ("Firstly, you will be familiarised with the thermal stimuli. This familiarisation procedure is necessary to ensure that participants are able to tolerate "
     "the heat pain delivered in this experiment. The thermal stimulus is delivered through the thermode attached to your forearm, which delivers heat pain by selectively stimulating pain fibres.\n\n"
-    "As the density of pain fibres can vary between individuals, the pain experienced and the efficacy of TENS can also vary. "
-    "As such, this familiarisation procedure will demonstrate the range of how painful the thermal stimulus could be when TENS is active for any participant."),
+    "As the density of pain fibres can vary between individuals, the pain experienced and the efficacy of TENS for participants who will receive TENS can also vary. "
+    "As such, this familiarisation procedure will demonstrate the range of how painful the thermal stimulus could be for any participant."),
     
     "familiarisation_2": ("In the familiarisation procedure, you will experience the thermal stimuli at a range of intensities. The machine will start at a low intensity, and incrementally increase each level. "
     "After receiving each thermal stimulus, you will be asked to give a pain rating for that level of heat. "
-    "The familiarisation procedure will take you through 10 increasing levels of heat intensities. \n\n Although the higher levels of heat intensities may be more uncomfortable or painful, please note that "
+    "The familiarisation procedure will take you through 15 increasing levels of heat intensities. \n\n Although the higher levels of heat intensities may be more uncomfortable or painful, please note that "
     "the maximum level of heat is safe and unlikely to cause you any actual harm. If, however, you find the thermal stimuli intolerable at any stage, please let the experimenter know and we will terminate the experiment immediately. "
     "This procedure will proceed at your pace, so feel free to take your time to rest between heat levels."),
         
     "familiarisation_finish": "Thank you for completing the familiarisation protocol. we will now proceed to the next phase of the experiment",
     
-    "preexposure_socialmodel": "We will now record some baseline measures. Please stay seated and still during this phase, as excessive movement may interfere with our readings. \n\n \
-    The TENS device may be activated intermittently but NO thermal stimuli will be delivered during this phase.",
-        
-    "preexposure_naturalhistory": "Before we begin, we will record some baseline measures. Please stay seated and stay still during this phase, as excessive movement may interfere with our readings. \n\n \
-    NO thermal stimuli will be delivered during this phase.",
-    
     "preexposure_waiting": "Collecting baseline readings, please stay still",
     
     "preexposure_completed": "Baseline measures have been recorded, thank you for your patience. \n\n\
     Please call for the experimenter to prepare for the next stage of the experiment",
-        
-    "experiment_socialmodel_conditioning" : ("We will now begin the main phase of the experiment. You will observe another participant receive a series of thermal stimuli with and without TENS. Your task is to predict how painful the other participant finds the thermal stimulus."
-    "This rating scale ranges from NOT PAINFUL to VERY PAINFUL. \n\n"
-    "All thermal stimuli will be signaled by a 10 second countdown. The heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
-    "To make clear whether the TENS is on or not, TENS will be indicated by a " + stim_colour_names["TENS"] + "square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + "square. "
-    "As the other participant waits for the thermal stimulus during the countdown, you will be asked to rate how painful you expect their heat to be. After each trial you will find out what pain rating they actually responded with. \n\n"
-    "Please call for the experimenter now to set up the stream with the other participant."),
+
+    "experiment_webcam_waiting" : ("Waiting for connection..."),
     
-    "experiment_socialmodel_webcam_waiting" : ("Waiting for connection..."),
-    
-    "experiment_socialmodel_webcam_ready" : ("Connection found !\n\n"
+    "experiment_webcam_ready" : ("Connection found !\n\n"
                                              "Press SPACEBAR to go live"),
     
-    "experiment_socialmodel_webcam_finish" : ("Observation phase completed!\n\n"
+    "experiment_webcam_finish" : ("Observation phase completed!\n\n"
                                               "Connection ended."),
-    
-    "experiment_socialmodel_extinction" : ("You will now receive a series of thermal stimuli and rate the intensity of each thermal stimulus. "
-    "Similarly to the other participant, the thermal stimuli will be signaled by a 10 second countdown and the heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
-    "To make clear whether the TENS is on or not, TENS will be indicated by a " + stim_colour_names["TENS"] + "square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + "square. "
-    "During the countdown, you will also be asked to rate how painful you expect the heat to be. After each trial there will also be a brief interval to allow you to rest between thermal stimuli. "
-    "You will also receive a brief rest between blocks of trials where the experimenter will move the thermode to another location on your arm. \n\n"
-    "Please ask the experimenter now if you have any questions before proceeding."),
-    
-    "experiment_naturalhistory" : ("We will now begin the main phase of the experiment. \n\n"
-    "You will now receive a series of thermal stimuli and your task is to rate the intensity of each thermal stimulus on a rating scale. This rating scale ranges from NOT PAINFUL to VERY PAINFUL. \n\n"
-    "All thermal stimuli will be signaled by a 10 second countdown. The heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
-    "To make clear whether the TENS is on or not, TENS activation will be indicated by a " + stim_colour_names["TENS"] + "square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + "square. "
-    "As you are waiting for the thermal stimulus during the countdown, you will also be asked to rate how painful you expect the heat to be. After each trial there will also be a brief interval to allow you to rest between thermal stimuli. "
-    "You will also receive a brief rest between blocks of trials where the experimenter will move the thermode to another location on your arm. \n\n"
-    "Please ask the experimenter now if you have any questions before proceeding."),
     
     "blockrest" : "This is a rest interval. Please call for the experimenter to adjust the thermode.", 
     
@@ -436,8 +403,62 @@ instructions_text = {
     
     "termination" : "The experiment has been terminated. Please ask the experimenter to help remove the devices."
 }
-
-# cue_demo_text = "When you are completely relaxed, press any key to start the next block..."
+    
+if groupname == "naturalhistory":
+    instructions_text["preexposure"] = ("We will now record some baseline measures. Please stay seated and stay still during this phase, as excessive movement may interfere with our readings. \n\n \
+    NO thermal stimuli will be delivered during this phase.")
+    instructions_text["conditioning"] = ("We will now begin the main phase of the experiment. \n\n"
+    "You will now receive a series of thermal stimuli and your task is to rate the intensity of each thermal stimulus on a rating scale. This rating scale ranges from NOT PAINFUL to VERY PAINFUL. \n\n"
+    "All thermal stimuli will be signaled by a 10 second countdown. The heat will be delivered at the end of the countdown when an X appears. A pulse monitor will also be active on some trials. "
+    "As you are waiting for the thermal stimulus during the countdown, you will also be asked to rate how painful you expect the heat to be. After each trial there will also be a brief interval to allow you to rest between thermal stimuli. "
+    "You will also receive a brief rest between blocks of trials where the experimenter will move the thermode to another location on your arm. \n\n"
+    "Please ask the experimenter now if you have any questions before proceeding.")
+    instructions_text["TENS_example"] = ("In this experiment you will not receive TENS, but will still receive heat pain stimulations while we take physiological readings in addition to your pain and expectancy ratings for pain.")
+    instructions_text["TENS_introduction"] = ("This experiment aims to investigate the effects of Transcutaneous Electrical Nerve Stimulation (TENS) on heat pain sensitivity. "
+    "You have, however, been allocated into a Control condition. You will still receive a series of heat pain stimulations in the absence of TENS.")
+    
+if groupname == "preexposure":
+    instructions_text["preexposure"] = ("We will now record some baseline measures. Please stay seated and still during this phase, as excessive movement may interfere with our readings. \n\n \
+    The TENS device may be activated intermittently but NO thermal stimuli will be delivered during this phase.")
+    instructions_text["TENS_example"] = ("In this experiment you may be asked to observe another participant receiving TENS. Although TENS has an audible cue, we will also present a" + stim_colour_names["TENS"] + " square on the screen to indicate when it is active. No-TENS trials will be indicated by a " + stim_colour_names["control"] + " square.")
+    instructions_text["TENS_introduction"] = ("This experiment aims to investigate the effects of Transcutaneous Electrical Nerve Stimulation (TENS) on heat pain sensitivity. "
+    "TENS is designed to increase pain sensitivity by enhancing the conductivity of pain signals being sent to your brain. Clinically this is used to enhance pain sensitivity in medical conditions where pain sensitivity is dampened. "
+    "In the absence of medical conditions, TENS significantly amplifies pain signals, meaning stimulations will be more painful when the TENS device is active. Although the TENS itself is not painful, you will feel a small sensation when it is turned on. \n\n"
+    "In this study you and another participant will receive a series of heat pain stimulations, and some heat pain stimulations will also be accompanied with TENS stimulation.")
+    instructions_text["conditioning"] = ("We will now begin the main phase of the experiment. You will observe another participant receive a series of thermal stimuli with and without TENS. Your task is to predict how painful the other participant finds the thermal stimulus."
+    "This rating scale ranges from NOT PAINFUL to VERY PAINFUL. \n\n"
+    "All thermal stimuli will be signaled by a 10 second countdown. The heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
+    "To make clear whether the TENS is on or not, TENS will be indicated by a " + stim_colour_names["TENS"] + " square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + " square. "
+    "As the other participant waits for the thermal stimulus during the countdown, you will be asked to rate how painful you expect their heat to be. After each trial you will find out what pain rating they actually responded with. \n\n"
+    "Please call for the experimenter now to set up the stream with the other participant.")
+    instructions_text["extinction"] = ("You will now receive a series of thermal stimuli and rate the intensity of each thermal stimulus. "
+    "Similarly to the other participant, the thermal stimuli will be signaled by a 10 second countdown and the heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
+    "To make clear whether the TENS is on or not, TENS will be indicated by a " + stim_colour_names["TENS"] + " square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + " square. "
+    "During the countdown, you will also be asked to rate how painful you expect the heat to be. After each trial there will also be a brief interval to allow you to rest between thermal stimuli. "
+    "You will also receive a brief rest between blocks of trials where the experimenter will move the thermode to another location on your arm. \n\n"
+    "Please ask the experimenter now if you have any questions before proceeding.")
+    
+elif groupname == "socialmodel":
+    instructions_text["preexposure"] = ("We will now record some baseline measures. Please stay seated and stay still during this phase, as excessive movement may interfere with our readings. \n\n \
+    NO thermal stimuli will be delivered during this phase.")
+    instructions_text["TENS_example"] = ("In this experiment you may be asked to observe another participant receiving TENS. Although TENS has an audible cue, we will also present a" + stim_colour_names["TENS"] + " square on the screen to indicate when it is active. No-TENS trials will be indicated by a " + stim_colour_names["control"] + " square.")
+    instructions_text["TENS_introduction"] = ("This experiment aims to investigate the effects of Transcutaneous Electrical Nerve Stimulation (TENS) on heat pain sensitivity. "
+    "TENS is designed to increase pain sensitivity by enhancing the conductivity of pain signals being sent to your brain. Clinically this is used to enhance pain sensitivity in medical conditions where pain sensitivity is dampened. "
+    "In the absence of medical conditions, TENS significantly amplifies pain signals, meaning stimulations will be more painful when the TENS device is active. Although the TENS itself is not painful, you will feel a small sensation when it is turned on. \n\n"
+    "In this study you and another participant will receive a series of heat pain stimulations, and some heat pain stimulations will also be accompanied with TENS stimulation.")
+    instructions_text["conditioning"] = ("We will now begin the main phase of the experiment. You will observe another participant receive a series of thermal stimuli with and without TENS. Your task is to predict how painful the other participant finds the thermal stimulus."
+    "This rating scale ranges from NOT PAINFUL to VERY PAINFUL. \n\n"
+    "All thermal stimuli will be signaled by a 10 second countdown. The heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
+    "To make clear whether the TENS is on or not, TENS will be indicated by a " + stim_colour_names["TENS"] + " square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + " square. "
+    "As the other participant waits for the thermal stimulus during the countdown, you will be asked to rate how painful you expect their heat to be. After each trial you will find out what pain rating they actually responded with. \n\n"
+    "Please call for the experimenter now to set up the stream with the other participant.")
+    instructions_text["extinction"] = ("You will now receive a series of thermal stimuli and rate the intensity of each thermal stimulus. "
+    "Similarly to the other participant, the thermal stimuli will be signaled by a 10 second countdown and the heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
+    "To make clear whether the TENS is on or not, TENS will be indicated by a " + stim_colour_names["TENS"] + " square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + " square. "
+    "During the countdown, you will also be asked to rate how painful you expect the heat to be. After each trial there will also be a brief interval to allow you to rest between thermal stimuli. "
+    "You will also receive a brief rest between blocks of trials where the experimenter will move the thermode to another location on your arm. \n\n"
+    "Please ask the experimenter now if you have any questions before proceeding."
+    )
 
 response_instructions = {
     "pain": "How painful was the heat?",
@@ -550,6 +571,10 @@ video_stim = visual.MovieStim(win,
                               autoStart=True,
                               loop = False)
 
+
+#turn on webcam
+webcam_feed = cv2.VideoCapture(0)
+
 # Define button_text dictionaries
 #### Make trial functions
 def show_fam_trial(current_trial):
@@ -607,9 +632,9 @@ def show_trial(current_trial,
 
     
     if trialtype == "socialmodel":
-        iti = video_stim_iti
+        iti = video_stim_iti    
     else: 
-        iti = random.randint(*iti_jitter) / 1000
+        iti = iti
         
     win.flip()
     
@@ -760,49 +785,47 @@ def show_trial(current_trial,
             exp_rating.draw()
             win.flip()    
 
-            current_trial["exp_response"] = exp_rating.getRating() #saves the expectancy response for that trial
-            exp_rating.reset() #resets the expectancy slider for subsequent trials
+        current_trial["exp_response"] = exp_rating.getRating() #saves the expectancy response for that trial
+        exp_rating.reset() #resets the expectancy slider for subsequent trials
                 
-            # deliver shock
-            if pport != None:
-                pport.setData(0)
-            fix_stim.draw()
+        # deliver shock
+        if pport != None:
+            pport.setData(0)
+        fix_stim.draw()
+        win.flip()
+        
+        if pport != None:
+            pport.setData(pain_trig)
+            core.wait(port_buffer_duration)
+            pport.setData(0)
+
+        # Get pain rating
+        while pain_rating.getRating() is None: # while mouse unclicked
+            pain_rating.readOnly = False
+            termination_check()
+            pain_rating.draw()
+            trial_text["pain"].draw()
+            win.flip()
+                
+                
+        pain_response_end_time = core.getTime() + response_hold_duration # amount of time for participants to adjust slider after making a response
+        
+        while core.getTime() < pain_response_end_time:
+            termination_check()
+            trial_text["pain"].draw()
+            pain_rating.draw()
             win.flip()
             
-            if pport != None:
-                pport.setData(pain_trig)
-                core.wait(port_buffer_duration)
-                pport.setData(0)
+        current_trial["pain_response"] = pain_rating.getRating()
+        pain_rating.reset()
 
-            # Get pain rating
-            while pain_rating.getRating() is None: # while mouse unclicked
-                pain_rating.readOnly = False
-                termination_check()
-                pain_rating.draw()
-                trial_text["pain"].draw()
-                win.flip()
-                    
-                    
-            pain_response_end_time = core.getTime() + response_hold_duration # amount of time for participants to adjust slider after making a response
-            
-            while core.getTime() < pain_response_end_time:
-                termination_check()
-                trial_text["pain"].draw()
-                pain_rating.draw()
-                win.flip()
-                
-            current_trial["pain_response"] = pain_rating.getRating()
-            pain_rating.reset()
-
-            win.flip()
-            core.wait(iti)
-            current_trial["iti"] = iti
-            
-def webcam_waiting(waittime = 1):
+        win.flip()
+        core.wait(iti)
+        current_trial["iti"] = iti
+        
+def webcam_waiting(waittime = 5):
     termination_check()
     global exp_finish
-    # setup webcam feed
-    webcam_feed = cv2.VideoCapture(0)
     
     if not webcam_feed.isOpened():
         print("Failed to open webcam.")
@@ -811,13 +834,13 @@ def webcam_waiting(waittime = 1):
     
 
     waiting_text = visual.TextStim(win,
-                        text=instructions_text['experiment_socialmodel_webcam_waiting'],
+                        text=instructions_text['experiment_webcam_waiting'],
                         height = 35,
                         pos = video_stim_pos,
                         wrapWidth= 800
                         )
     ready_text = visual.TextStim(win,
-                        text=instructions_text['experiment_socialmodel_webcam_ready'],
+                        text=instructions_text['experiment_webcam_ready'],
                         height = 35,
                         pos = video_stim_pos,
                         wrapWidth= 800
@@ -874,11 +897,12 @@ def webcam_waiting(waittime = 1):
         if 'space' in keys:
             space_pressed = True
             
-def show_socialmodel(playtime = 10,socialmodel_stim = video_stim):
+def show_socialmodel(playtime = 10,socialmodel_stim = video_stim,webcam = True):
+    global exp_finish
     termination_check() 
     webcam_feed = cv2.VideoCapture(0)
     sm_timer = core.CountdownTimer(playtime)
-    while sm_timer > 0: 
+    while sm_timer.getTime() > 0: 
         # capture each frame of webcam feed in RGB
         ret, webcam_frame = webcam_feed.read() 
         if not ret: #if there is no image returned from webcam_feed.read(), break loop and print error message
@@ -896,17 +920,20 @@ def show_socialmodel(playtime = 10,socialmodel_stim = video_stim):
                                        size = webcam_stim_size    
                                        )
         socialmodel_stim.draw()
-        webcam_stim.draw()
+        if webcam == True: 
+            webcam_stim.draw()
         win.flip()
         
+    
+
+exp_finish = None        
+lastblocknum = None
 
 # Run experiment
 while not exp_finish:
     termination_check()
     
-    lastblocknum = None
-    
-    # #introduce TENS and run familiarisation procedure
+    # ### introduce TENS and run familiarisation procedure
     # instruction_trial(instructions_text["welcome"],3)
     # instruction_trial(instructions_text["TENS_introduction"],5)
     # instruction_trial(instructions_text["familiarisation_1"],5)
@@ -914,89 +941,78 @@ while not exp_finish:
     
     # for trial in list(filter(lambda trial: trial['phase'] == "familiarisation", trial_order)):
     #     show_fam_trial(trial)
-    # show_fam_trial
-    
     # instruction_trial(instructions_text["familiarisation_finish"],2)
-    
-    # #pre-exposure phase
-    # if groupname == "naturalhistory":
-    #     instruction_trial(instructions_text["preexposure_naturalhistory"],5)
-    
-    #     for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
-    #         show_trial(trial,"preexposure")
-            
-    #     instruction_trial(instructions_text['experiment_naturalhistory'],5)
-        
-        
-    # # run conditioning and extinction phases normally for natural history group
-    #     for blocknum in trial_order:
-    #         if blocknum > 1:
-    #             instruction_trial(instructions_text["blockrest"],10,"enter",None)
-    #             instruction_trial(instructions_text["blockresume"],2)
-                
-    #         for trial in list(filter(lambda trial: trial['phase'] == "conditioning" and trial[blocknum == block], trial_order)):
-    #             show_trial(trial,"standard")
-        
-    #         for trial in list(filter(lambda trial: trial['phase'] == "extinction" and trial[blocknum == block], trial_order)):
-    #             show_trial(trial,"standard")
-        
-    # elif groupname != "naturalhistory":
-        # instruction_trial(instructions_text["preexposure_socialmodel"],5)
-        
-        # for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
-        #     show_trial(trial,"preexposure")
 
-        # instruction_trial(instructions_text["preexposure_completed"],3)
-    instruction_trial(instructions_text['experiment_socialmodel_conditioning'],5)
-        
-    # set up 'webcam' for social model condition
-    webcam_waiting(5)
+    # ### pre-exposure phase
+    # instruction_trial(instructions_text["preexposure"])
 
-    # start video 
+    # for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
+    #     show_trial(trial,"preexposure")
     
-    # for blocknum in trial_order:
-    #     if blocknum > 1:
-    #         instruction_trial(instructions_text["blockrest"],10,"enter",None)
-    #         instruction_trial(instructions_text["blockresume"],2)
+    # instruction_trial(instructions_text["preexposure_completed"])
+
+    # # run conditioning and extinction phases
+    # instruction_trial(instructions_text["conditioning"])
+
+    #natural history just experiences all trials normally
+    if groupname == "naturalhistory":
+        for trial in list(filter(lambda trial: trial['phase'] == "conditioning", trial_order)):
+            current_blocknum = trial['blocknum']
+            if lastblocknum is not None and current_blocknum != lastblocknum:
+                instruction_trial(instructions_text["blockrest"],10)
+            show_trial(trial,"standard")
+            lastblocknum = current_blocknum
+        for trial in list(filter(lambda trial: trial['phase'] == "extinction", trial_order)):
+            current_blocknum = trial['blocknum']
+            if lastblocknum is not None and current_blocknum != lastblocknum:
+                lastblocknum = current_blocknum
+                instruction_trial(instructions_text["blockrest"],10)
+            show_trial(trial,"standard")
+            lastblocknum = current_blocknum
+        
+    elif groupname != "naturalhistory":
+        #run social modelling manipulation
+        webcam_waiting()
+        show_socialmodel(playtime = 60,
+                         socialmodel_stim=video_stim,
+                         webcam=True)
             
-    #     for trial in list(filter(lambda trial: trial['phase'] == "conditioning", trial_order)):
-    #         show_trial(trial,
-    #                 trialtype="socialmodel",
-    #                 video=video_stim)
+        for trial in list(filter(lambda trial: trial['phase'] == "conditioning", trial_order)):
+            current_blocknum = trial['blocknum']
+            if lastblocknum is not None and current_blocknum != lastblocknum:
+                lastblocknum = current_blocknum
+                show_socialmodel(playtime = 20,
+                    socialmodel_stim=video_stim,
+                    webcam=None)
+            show_trial(trial,
+                    trialtype="socialmodel",
+                    video=video_stim)
     
-    #     lastblocknum = None
-    
-    # for trial in trial_order:
-    #     current_blocknum = trial['blocknum']
-    #     if lastblocknum is not None and current_blocknum != lastblocknum:
-    #         lastblocknum = current_blocknum
-    #         instruction_trial(instructions_text["blockrest"],10,"enter",None)
-    #     show_trial(trial)
-    
-    # #keep video going after conditioning phase and then flip at end:
-    # video_stim.draw()
-    # win.flip()
-    
-    # if video_stim.isFinished == True: 
-    #     video_stim.stop()
-    # win.flip()
-    
-    # instruction_trial(instructions_text["experiment_socialmodel_webcam_finish"],3)
-    
-    # instruction_trial(instructions_text["experiment_socialmodel_extinction"],10)
-    # for blocknum in trial_order:
-    #     if blocknum > num_blocks_conditioning:
-    #         instruction_trial(instructions_text["blockrest"],10,"enter",None)
-    #         instruction_trial(instructions_text["blockresume"],2)
-    #     for trial in list(filter(lambda trial: trial['phase'] == "extinction", trial_order)):
-    #         show_trial(trial,"standard")
+        #keep video going after conditioning phase and then flip at end:
+        video_stim.draw()
+        win.flip()
+        
+        if video_stim.isFinished == True: 
+            video_stim.stop()
+        win.flip()
+        
+        instruction_trial(instructions_text["experiment_webcam_finish"],3)
+        
+        instruction_trial(instructions_text["extinction"],10)
+
+        for trial in list(filter(lambda trial: trial['phase'] == "extinction", trial_order)):
+            current_blocknum = trial['blocknum']
+            if lastblocknum is not None and current_blocknum != lastblocknum:
+                instruction_trial(instructions_text["blockrest"],10)
+            show_trial(trial,"standard")
+            lastblocknum = current_blocknum
 
     if pport != None:
         pport.setData(0)
         
     # save trial data
     save_data(trial_order)
-    # exit_screen(instructions_text["end"])
+    exit_screen(instructions_text["end"])
     
     exp_finish = True
     
