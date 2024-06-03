@@ -19,9 +19,8 @@ TENS_pulse_int = 0.1 # interval length for TENS on/off signals (e.g. 0.1 = 0.2s 
 # parallel port triggers
 port_address = 0x3FF88
 pain_trig = 2 #levels and order need to be organised through CHEPS system
-scr_trig = 1
-tens_trig = 64
-audio_trig = {"TENS": 128, "control": 0} #Pin 8 in relay box just for the clicking sound
+eda_trig = 1 #pin 1 to mark trial information on LabChart
+tens_trig = {"TENS": 128, "control": 0} #Pin 8 in relay box just for the clicking sound
 
 ## within experiment parameters
 experimentcode = "LI1"
@@ -207,6 +206,7 @@ def save_data(data):
         trial["group"] = group
         trial["groupname"] = groupname
         trial["cb"] = cb
+        trial['blockorder'] = block_order
         trial["tens_colour"] = stim_colour_names["TENS"]
         trial["control_colour"] = stim_colour_names["control"]
         
@@ -289,7 +289,13 @@ for i in range(1, num_TENS_preexp + 1):
 num_blocks_conditioning = 2
 num_blocks_extinction = 2
 
-conditioning_stim_blocks = [['control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'control', 'control', 'TENS', 'TENS', 'TENS', 'control'],
+socialmodel_stim_blocks = [['control', 'TENS', 'control', 'control', 'TENS', 'TENS', 'TENS', 'control','control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control'],
+                           ['TENS', 'TENS', 'TENS', 'control', 'TENS', 'control', 'TENS', 'control','control', 'TENS', 'control', 'TENS', 'control', 'control', 'TENS', 'control']]
+
+socialmodel_outcome_blocks = [['low','high','low','low','high','high','high','low','low','high','high','low','low','high','high','low'],
+                              ['high','high','high','low','high','low','high','low','low','high','low','high','low','low','high','low']]
+
+extinction_stim_blocks = [['control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'control', 'control', 'TENS', 'TENS', 'TENS', 'control'],
                             ['control', 'TENS', 'control', 'TENS', 'control', 'control', 'TENS', 'control', 'TENS', 'TENS', 'TENS', 'control', 'TENS', 'control', 'TENS', 'control'],
                             ['TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'TENS', 'TENS', 'control', 'control', 'control', 'TENS'],
                             ['TENS', 'control', 'TENS', 'control', 'TENS', 'TENS', 'control', 'TENS', 'control', 'control', 'control', 'TENS', 'control', 'TENS', 'control', 'TENS']]
@@ -304,10 +310,10 @@ naturalhistory_stim_blocks = [['TENS', 'TENS', 'control', 'control', 'TENS', 'co
 ##need a different list to allocate high and low heat outcomes to TENS/control trials 
 #0 = TENS high, 1 = TENS low, 2 = control high, 3 = control low
 #conditioning pairs TENS with high outcome (nocebo), and control with low outcome
-conditioning_outcome_blocks = [['low','high','high','low','low','high','high','low','low','high','low','low','high','high','high','low'],
+naturalhistory_outcome_blocks = [['low','high','high','low','low','high','high','low','low','high','low','low','high','high','high','low'],
                                ['low','high','low','high','low','low','high','low','high','high','high','low','high','low','high','low'],
-                               ['high','low','low','high','high','low','low','high','high','low','high','high','low','low','low','high'],
-                               ['high','low','high','low','high','high','low','high','low','low','low','high','low','high','low','high']]
+                               ['low','low','high','high','high','low','low','high','high','low','high','high','low','low','low','high'],
+                               ['high','low','high','low','low','high','low','high','low','low','high','high','low','high','low','high']]
 
 #low heat for every trial in extinction regardless of stimulus
 extinction_outcome_block = ['low']*16
@@ -316,7 +322,7 @@ extinction_outcome_block = ['low']*16
     #create conditioning blocks, outcome dependent on natural history vs nocebo conditioning contingencies
 if groupname != "naturalhistory": 
     for block in range(1,num_blocks_conditioning+1):
-        for stimulus,outcome in zip(conditioning_stim_blocks[block_order[block-1]],conditioning_outcome_blocks[block_order[block-1]]):
+        for stimulus,outcome in zip(socialmodel_stim_blocks[block-1],socialmodel_outcome_blocks[block-1]):
             trial = {
                 "phase": "conditioning",
                 "blocknum": block,
@@ -331,7 +337,7 @@ if groupname != "naturalhistory":
             
 elif groupname == "naturalhistory":
     for block in range(1,num_blocks_conditioning+1):
-        for stimulus,outcome in zip(naturalhistory_stim_blocks[block_order[block-1]],conditioning_outcome_blocks[block_order[block-1]]):
+        for stimulus,outcome in zip(naturalhistory_stim_blocks[block_order[block-1]],naturalhistory_outcome_blocks[block_order[block-1]]):
             trial = {
                 "phase": "conditioning",
                 "blocknum": block,
@@ -346,7 +352,7 @@ elif groupname == "naturalhistory":
                     
 #create extinction trials, all outcomes same regardless of condition (low heat)
 for block in range(num_blocks_conditioning+1,num_blocks_conditioning+num_blocks_extinction+1):
-    for stimulus,outcome in zip(conditioning_stim_blocks[block_order[block-1]],extinction_outcome_block):
+    for stimulus,outcome in zip(extinction_stim_blocks[block_order[block-1]],extinction_outcome_block):
         trial = {
             "phase": "extinction",
             "blocknum": block,
@@ -371,7 +377,7 @@ instructions_text = {
     
     "familiarisation_1": ("Firstly, you will be familiarised with the thermal stimuli. This familiarisation procedure is necessary to ensure that participants are able to tolerate "
     "the heat pain delivered in this experiment. The thermal stimulus is delivered through the thermode attached to your forearm, which delivers heat pain by selectively stimulating pain fibres.\n\n"
-    "As the density of pain fibres can vary between individuals, the pain experienced and the efficacy of TENS for participants who will receive TENS can also vary. "
+    "As the density of pain fibres can vary between individuals, the pain experienced and the efficacy of TENS for participants who will receive TENS stimulation can also vary. "
     "As such, this familiarisation procedure will demonstrate the range of how painful the thermal stimulus could be for any participant."),
     
     "familiarisation_2": ("In the familiarisation procedure, you will experience the thermal stimuli at a range of intensities. The machine will start at a low intensity, and incrementally increase each level. "
@@ -597,7 +603,7 @@ def show_fam_trial(current_trial):
     win.flip()
     
     if pport != None:
-        pport.setData(pain_trig)
+        pport.setData(pain_trig+eda_trig)
         core.wait(port_buffer_duration)
         pport.setData(0)
     
@@ -628,8 +634,6 @@ def show_trial(current_trial,
    
     if pport != None:
         pport.setData(0)
-        
-
     
     if trialtype == "socialmodel":
         iti = video_stim_iti    
@@ -655,9 +659,10 @@ def show_trial(current_trial,
                 termination_check()
                 
                 if pport != None:
-                # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
+                # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int, marking TENS onset with EDA trig
+                    pport.setData(tens_trig[current_trial["stimulus"]] + eda_trig)
                     if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
-                        pport.setData(audio_trig[current_trial["stimulus"]])
+                        pport.setData(tens_trig[current_trial["stimulus"]])
                     if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
                         pport.setData(0)
                         TENS_timer = countdown_timer.getTime() 
@@ -752,9 +757,10 @@ def show_trial(current_trial,
             termination_check()
             
             if pport != None:
-                # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
+                # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int, marking TENS onset with EDA trig
+                pport.setData(tens_trig[current_trial["stimulus"]] + eda_trig)
                 if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
-                    pport.setData(audio_trig[current_trial["stimulus"]])
+                    pport.setData(tens_trig[current_trial["stimulus"]])
                 if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
                     pport.setData(0)
                     TENS_timer = countdown_timer.getTime() 
@@ -768,11 +774,10 @@ def show_trial(current_trial,
 
         while countdown_timer.getTime() < 7 and countdown_timer.getTime() > 0: #ask for expectancy at 7 seconds
             if pport != None:
-                termination_check()
-                        
+                termination_check()                        
                 # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
                 if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
-                    pport.setData(audio_trig[current_trial["stimulus"]])
+                    pport.setData(tens_trig[current_trial["stimulus"]])
                 if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
                     pport.setData(0)
                     TENS_timer = countdown_timer.getTime() 
@@ -795,7 +800,7 @@ def show_trial(current_trial,
         win.flip()
         
         if pport != None:
-            pport.setData(pain_trig)
+            pport.setData(pain_trig+eda_trig)
             core.wait(port_buffer_duration)
             pport.setData(0)
 
@@ -933,26 +938,26 @@ lastblocknum = None
 while not exp_finish:
     termination_check()
     
-    # ### introduce TENS and run familiarisation procedure
-    # instruction_trial(instructions_text["welcome"],3)
-    # instruction_trial(instructions_text["TENS_introduction"],5)
-    # instruction_trial(instructions_text["familiarisation_1"],5)
-    # instruction_trial(instructions_text["familiarisation_2"],5)
+    ### introduce TENS and run familiarisation procedure
+    instruction_trial(instructions_text["welcome"],3)
+    instruction_trial(instructions_text["TENS_introduction"],5)
+    instruction_trial(instructions_text["familiarisation_1"],5)
+    instruction_trial(instructions_text["familiarisation_2"],5)
     
-    # for trial in list(filter(lambda trial: trial['phase'] == "familiarisation", trial_order)):
-    #     show_fam_trial(trial)
-    # instruction_trial(instructions_text["familiarisation_finish"],2)
+    for trial in list(filter(lambda trial: trial['phase'] == "familiarisation", trial_order)):
+        show_fam_trial(trial)
+    instruction_trial(instructions_text["familiarisation_finish"],2)
 
-    # ### pre-exposure phase
-    # instruction_trial(instructions_text["preexposure"])
+    ### pre-exposure phase
+    instruction_trial(instructions_text["preexposure"])
 
-    # for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
-    #     show_trial(trial,"preexposure")
+    for trial in list(filter(lambda trial: trial['phase'] == "preexposure", trial_order)):
+        show_trial(trial,"preexposure")
     
-    # instruction_trial(instructions_text["preexposure_completed"])
+    instruction_trial(instructions_text["preexposure_completed"])
 
-    # # run conditioning and extinction phases
-    # instruction_trial(instructions_text["conditioning"])
+    # run conditioning and extinction phases
+    instruction_trial(instructions_text["conditioning"])
 
     #natural history just experiences all trials normally
     if groupname == "naturalhistory":
