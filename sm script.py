@@ -1,11 +1,8 @@
 # Import packages
 from psychopy import core, event, gui, visual, parallel, prefs
-import time
 import math
-import random
 import csv
 import os
-import cv2
 
 ports_live = None # Set to None if parallel ports not plugged for coding/debugging other parts of exp
 
@@ -19,9 +16,8 @@ TENS_pulse_int = 0.1 # interval length for TENS on/off signals (e.g. 0.1 = 0.2s 
 # parallel port triggers
 port_address = 0x3FF88
 pain_trig = 2 #levels and order need to be organised through CHEPS system
-scr_trig = 1
-tens_trig = 64
-audio_trig = {"TENS": 128, "control": 0} #Pin 8 in relay box just for the clicking sound
+eda_trig = 1
+tens_trig = {"TENS": 128, "control": 0} #Pin 8 in relay box just for the clicking sound
 
 ## within experiment parameters
 experimentcode = "LI1_SM"
@@ -140,11 +136,11 @@ trial_order = []
 #### 4 x blocks (4x fixed pseudo-randomised runs of 4x TENs and 4x no-TENS)
 num_blocks_conditioning = 2
 
-conditioning_stim_blocks = [['control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'control', 'control', 'TENS', 'TENS', 'TENS', 'control'],
-                            ['control', 'TENS', 'control', 'TENS', 'control', 'control', 'TENS', 'control', 'TENS', 'TENS', 'TENS', 'control', 'TENS', 'control', 'TENS', 'control']]
+conditioning_stim_blocks = [['control', 'TENS', 'control', 'control', 'TENS', 'TENS', 'TENS', 'control','control', 'TENS', 'TENS', 'control', 'control', 'TENS', 'TENS', 'control'],
+                           ['TENS', 'TENS', 'TENS', 'control', 'TENS', 'control', 'TENS', 'control','control', 'TENS', 'control', 'TENS', 'control', 'control', 'TENS', 'control']]
 
-conditioning_outcome_blocks = [['low','high','high','low','low','high','high','low','low','high','low','low','high','high','high','low'],
-                               ['low','high','low','high','low','low','high','low','high','high','high','low','high','low','high','low']]
+conditioning_outcome_blocks = [['low','high','low','low','high','high','high','low','low','high','high','low','low','high','high','low'],
+                              ['high','high','high','low','high','low','high','low','low','high','low','high','low','low','high','low']]
 
 for block in range(1,num_blocks_conditioning+1):
     for stimulus,outcome in zip(conditioning_stim_blocks[block-1],conditioning_outcome_blocks[block-1]):
@@ -162,9 +158,7 @@ for block in range(1,num_blocks_conditioning+1):
         
 response_instructions = {
     "pain": "How painful was the heat?",
-    "expectancy": "How painful do you expect the thermal stimulus to be?",
-    "SM": "The demonstrator made the following response on this trial",
-    "familiarisation": "When you are ready to receive the thermal stimulus, press the SPACEBAR to activate the thermal stimulus. "
+    "expectancy": "How painful do you expect the thermal stimulus to be?"
     }
 
 trial_text = {
@@ -284,7 +278,7 @@ def show_trial(current_trial):
         if pport != None:
             # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
             if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
-                pport.setData(audio_trig[current_trial["stimulus"]])
+                pport.setData(tens_trig[current_trial["stimulus"]])
             if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
                 pport.setData(0)
                 TENS_timer = countdown_timer.getTime() 
@@ -302,7 +296,7 @@ def show_trial(current_trial):
                     
             # turn on TENS pulses if TENS trial, at an on/off interval speed of TENS_pulse_int
             if countdown_timer.getTime() < TENS_timer - TENS_pulse_int:
-                pport.setData(audio_trig[current_trial["stimulus"]])
+                pport.setData(tens_trig[current_trial["stimulus"]])
             if countdown_timer.getTime() < TENS_timer - TENS_pulse_int*2:
                 pport.setData(0)
                 TENS_timer = countdown_timer.getTime() 
@@ -325,7 +319,7 @@ def show_trial(current_trial):
     win.flip()
     
     if pport != None:
-        pport.setData(pain_trig)
+        pport.setData(pain_trig+eda_trig)
         core.wait(port_buffer_duration)
         pport.setData(0)
 

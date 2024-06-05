@@ -391,7 +391,7 @@ instructions_text = {
     "preexposure_waiting": "Collecting baseline readings, please stay still",
     
     "preexposure_completed": "Baseline measures have been recorded, thank you for your patience. \n\n\
-    Please call for the experimenter to prepare for the next stage of the experiment",
+    Please wait for the experimenter to prepare the next stage of the experiment",
 
     "experiment_webcam_waiting" : ("Waiting for connection..."),
     
@@ -401,7 +401,7 @@ instructions_text = {
     "experiment_webcam_finish" : ("Observation phase completed!\n\n"
                                               "Connection ended."),
     
-    "blockrest" : "This is a rest interval. Please call for the experimenter to adjust the thermode.", 
+    "blockrest" : "This is a rest interval. Please wait for the experimenter to adjust the thermode.", 
     
     "blockresume" : "Feel free to take as much as rest as necessary before starting the next block.",
     
@@ -457,7 +457,7 @@ elif groupname == "socialmodel":
     "All thermal stimuli will be signaled by a 10 second countdown. The heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
     "To make clear whether the TENS is on or not, TENS will be indicated by a " + stim_colour_names["TENS"] + " square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + " square. "
     "As the other participant waits for the thermal stimulus during the countdown, you will be asked to rate how painful you expect their heat to be. After each trial you will find out what pain rating they actually responded with. \n\n"
-    "Please call for the experimenter now to set up the stream with the other participant.")
+    "Please wait for the experimenter to set up the stream with the other participant.")
     instructions_text["extinction"] = ("You will now receive a series of thermal stimuli and rate the intensity of each thermal stimulus. "
     "Similarly to the other participant, the thermal stimuli will be signaled by a 10 second countdown and the heat will be delivered at the end of the countdown when an X appears. The TENS will now also be active on some trials. "
     "To make clear whether the TENS is on or not, TENS will be indicated by a " + stim_colour_names["TENS"] + " square on the screen, whereas no-TENS trials will be indicated by a " + stim_colour_names["control"] + " square. "
